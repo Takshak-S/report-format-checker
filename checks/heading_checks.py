@@ -16,9 +16,17 @@ from utils.constants import (
     FONT_SIZE_HEADING_L0, FONT_SIZE_HEADING_L1, FONT_SIZE_BODY,
     FONT_SIZE_TOLERANCE,
     HEADING_L0_PATTERN, HEADING_L1_PATTERN, HEADING_L2_PATTERN,
+    HEADER_ZONE_PT, FOOTER_ZONE_PT,
     Severity, Category,
 )
 from utils.error_model import Violation
+
+
+# ── Title Case small words that don't need capitalization ─────────────────────
+TITLE_CASE_SKIP_WORDS = {
+    "a", "an", "the", "and", "but", "or", "nor", "for", "in", "on",
+    "at", "to", "of", "by", "as", "is", "it", "vs", "via", "per",
+}
 
 
 @dataclass
@@ -42,9 +50,9 @@ def _detect_heading_level(line: LineInfo) -> int | None:
 
     size = line.size or 0
 
-    # Level 0: 16 pt, UPPERCASE, no decimal prefix
+    # Level 0: 16 pt, UPPERCASE, no decimal prefix — require meaningful length
     if abs(size - FONT_SIZE_HEADING_L0) <= FONT_SIZE_TOLERANCE:
-        if HEADING_L0_PATTERN.fullmatch(text):
+        if HEADING_L0_PATTERN.fullmatch(text) and len(text) > 6:
             return 0
 
     # Level 1: 14 pt, bold, decimal prefix + UPPERCASE
@@ -52,7 +60,8 @@ def _detect_heading_level(line: LineInfo) -> int | None:
         if HEADING_L1_PATTERN.match(text):
             return 1
         # Also catch 14 pt uppercase lines without numbering
-        if text.isupper() and len(text) > 4:
+        # but require minimum 2 words and 8+ chars to avoid false positives
+        if text.isupper() and len(text) > 8 and len(text.split()) >= 2:
             return 1
 
     # Level 2: 12 pt, Title Case, two-decimal prefix
@@ -60,7 +69,7 @@ def _detect_heading_level(line: LineInfo) -> int | None:
         if HEADING_L2_PATTERN.match(text):
             return 2
         # Bold+italic at 12pt → Level 3
-        if line.bold and line.italic:
+        if line.bold and line.italic and len(text) > 5:
             return 3
 
     return None
@@ -146,8 +155,9 @@ def check_heading_case(headings: list[DetectedHeading]) -> list[Violation]:
 
         if h.level == 0:
             # Strip heading number prefix if any, check rest is uppercase
-            body = re.sub(r"^\d+[\.\s]*", "", text)
-            if not body.isupper():
+            body = re.sub(r"^\d+[.\s]*", "", text)
+            body = re.sub(r"^CHAPTER\s+\d+[\s.:–-]*", "", body, flags=re.IGNORECASE)
+            if body and not body.isupper():
                 violations.append(Violation(
                     category=Category.HEADINGS,
                     severity=Severity.WARNING,
@@ -172,11 +182,17 @@ def check_heading_case(headings: list[DetectedHeading]) -> list[Violation]:
 
         elif h.level == 2:
             # Title Case check — each word should start with uppercase
+            # Skip small words (a, an, the, for, and, of, etc.)
             m = re.match(r"^\d+\.\d+\.\d+\s+(.*)", text)
             if m:
                 heading_body = m.group(1)
                 words = heading_body.split()
-                non_title = [w for w in words if w and w[0].islower() and len(w) > 3]
+                non_title = [
+                    w for w in words
+                    if w and w[0].islower()
+                    and w.lower() not in TITLE_CASE_SKIP_WORDS
+                    and len(w) > 3
+                ]
                 if non_title:
                     violations.append(Violation(
                         category=Category.HEADINGS,
@@ -195,17 +211,26 @@ def check_heading_case(headings: list[DetectedHeading]) -> list[Violation]:
 def check_chapter_new_page(headings: list[DetectedHeading], doc: ParsedDocument) -> list[Violation]:
     """
     Level-0 chapter titles should be the first significant content on their page.
-    Heuristic: check if any content exists on the same page above the heading.
+    Heuristic: check if any content exists on the same page above the heading,
+    excluding headers, page numbers, and very short fragments.
     """
     violations = []
     l0_headings = [h for h in headings if h.level == 0]
 
     for h in l0_headings:
         page_lines = doc.lines_on_page(h.page_num)
-        # Lines above this heading on the same page
-        lines_above = [l for l in page_lines if l.top < h.line.top - 20]
-        # Filter out page numbers (very short, near bottom of previous group)
-        significant_above = [l for l in lines_above if len(l.text.strip()) > 5]
+        page_h = doc.page_sizes[h.page_num - 1][1] if h.page_num <= len(doc.page_sizes) else 841.89
+
+        # Lines above this heading on the same page (with wider offset to skip headers)
+        lines_above = [l for l in page_lines if l.top < h.line.top - 40]
+
+        # Filter out page numbers, very short lines, and header-zone content
+        significant_above = [
+            l for l in lines_above
+            if len(l.text.strip()) > 10
+            and l.top >= HEADER_ZONE_PT
+        ]
+
         if significant_above:
             violations.append(Violation(
                 category=Category.HEADINGS,

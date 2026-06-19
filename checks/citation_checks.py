@@ -7,12 +7,16 @@ Checks:
   3. Every in-text citation has a corresponding bibliography entry
   4. Every bibliography entry is cited at least once in-text
   5. No orphaned references
+  6. Support for numeric citation styles [1], [2-3]
 """
 from __future__ import annotations
 
 import re
 from ingestion.pdf_loader import ParsedDocument
-from utils.constants import INTEXT_CITATION_PATTERN, Severity, Category
+from utils.constants import (
+    INTEXT_CITATION_PATTERN, NUMERIC_CITATION_PATTERN,
+    Severity, Category,
+)
 from utils.error_model import Violation
 
 
@@ -20,19 +24,25 @@ from utils.error_model import Violation
 
 # APA journal article: Author, A. A., & Author, B. B. (Year). Title. Journal, Volume(Issue), pages. DOI
 APA_JOURNAL = re.compile(
-    r"[A-Z][a-z]+,\s+[A-Z][\.\s].*?\(\d{4}\)\.\s+.+\.\s+\w.+,\s*\d+",
+    r"[A-Z][a-z]+,\s+[A-Z][.\s].*?\(\d{4}\)\.\s+.+\.\s+\w.+,\s*\d+",
     re.DOTALL,
 )
 
 # APA book: Author, A. A. (Year). Title of book. Publisher.
 APA_BOOK = re.compile(
-    r"[A-Z][a-z]+,\s+[A-Z][\.\s].*?\(\d{4}\)\.\s+[A-Z].+\.\s+[A-Z].+\.",
+    r"[A-Z][a-z]+,\s+[A-Z][.\s].*?\(\d{4}\)\.\s+[A-Z].+\.\s+[A-Z].+\.",
     re.DOTALL,
 )
 
 # APA website: Author. (Year, Month Day). Title. Site. URL
 APA_WEBSITE = re.compile(
     r".+\(\d{4}.*?\)\.\s+.+\.\s+(https?://|www\.)",
+    re.DOTALL,
+)
+
+# General APA heuristic: has author-like start, year in parens, and period-separated segments
+APA_GENERAL = re.compile(
+    r"[A-Z][a-z]+.*?\(\d{4}[a-z]?\)\.\s+.+\.",
     re.DOTALL,
 )
 
@@ -79,11 +89,16 @@ def _parse_bib_entries(bib_text: str) -> list[str]:
 def _extract_intext_citations(doc: ParsedDocument) -> list[tuple[str, int]]:
     """
     Return list of (citation_text, page_num) for all in-text citations found.
+    Includes both author-year and numeric styles.
     """
     citations = []
     for page_idx, text in enumerate(doc.raw_text_by_page):
         page_num = page_idx + 1
+        # Author-year citations
         for m in INTEXT_CITATION_PATTERN.finditer(text):
+            citations.append((m.group(), page_num))
+        # Numeric citations
+        for m in NUMERIC_CITATION_PATTERN.finditer(text):
             citations.append((m.group(), page_num))
     return citations
 
@@ -105,6 +120,7 @@ def _validate_apa_entry(entry: str) -> bool:
         APA_JOURNAL.search(entry)
         or APA_BOOK.search(entry)
         or APA_WEBSITE.search(entry)
+        or APA_GENERAL.search(entry)   # broader heuristic
         or (YEAR_PATTERN.search(entry) and len(entry) > 40)
     )
 
@@ -166,16 +182,23 @@ def run_citation_checks(doc: ParsedDocument) -> list[Violation]:
         if key not in intext_keys:
             intext_keys[key] = page_num
 
-    # 6. In-text citation without bibliography entry
+    # 6. In-text citation without bibliography entry — use full last-name matching
     for key, page_num in intext_keys.items():
         author, year = key
         if not author or not year:
             continue
-        # Fuzzy match against bib_keys
+        # Full last-name case-insensitive match (not just 4-char prefix)
         matched = any(
-            bk_author.startswith(author[:4]) and bk_year == year
+            bk_author == author and bk_year == year
             for bk_author, bk_year in bib_keys
         )
+        # Fallback: also try prefix matching for hyphenated/long names
+        if not matched:
+            matched = any(
+                (bk_author.startswith(author) or author.startswith(bk_author))
+                and bk_year == year
+                for bk_author, bk_year in bib_keys
+            )
         if not matched:
             violations.append(Violation(
                 category=Category.CITATIONS,
@@ -185,10 +208,11 @@ def run_citation_checks(doc: ParsedDocument) -> list[Violation]:
                 detail=f"Author '{author}', Year '{year}' not found in references",
             ))
 
-    # 7. Bibliography entry never cited in text
+    # 7. Bibliography entry never cited in text — use full last-name matching
     for bk_author, bk_year in bib_keys:
         cited = any(
-            it_author.startswith(bk_author[:4]) and it_year == bk_year
+            (it_author == bk_author or it_author.startswith(bk_author) or bk_author.startswith(it_author))
+            and it_year == bk_year
             for it_author, it_year in intext_keys
         )
         if not cited:

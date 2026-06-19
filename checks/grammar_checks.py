@@ -5,12 +5,18 @@ Checks:
   1. Grammar and spelling using LanguageTool
   2. Custom CS/tech domain dictionary to suppress false positives
   3. Scans body text pages only (skips bibliography, cover pages)
+  4. Skips captions, headings, and equation-containing lines
 """
 from __future__ import annotations
 
 import re
 from ingestion.pdf_loader import ParsedDocument
-from utils.constants import Severity, Category
+from utils.constants import (
+    FIGURE_CAPTION_PATTERN, TABLE_CAPTION_PATTERN,
+    HEADING_L0_PATTERN, HEADING_L1_PATTERN, HEADING_L2_PATTERN,
+    EQUATION_PATTERN, EQUATION_BROAD_PATTERN,
+    Severity, Category,
+)
 from utils.error_model import Violation
 
 try:
@@ -58,9 +64,28 @@ CS_DICTIONARY = {
     "nlp", "cv", "ml", "ai", "dl", "rl", "gan", "vae", "cnn",
     "rnn", "gru", "bert", "gpt", "llm", "llms", "transformer",
     "transformers", "resnet", "vgg", "alexnet", "yolo",
+    # Frameworks & Libraries
+    "react", "angular", "vue", "svelte", "nextjs", "nuxt",
+    "flask", "django", "fastapi", "express", "nodejs", "springboot",
+    "mongodb", "postgresql", "mysql", "redis", "elasticsearch",
+    "kubernetes", "docker", "nginx", "apache", "graphql",
+    "restful", "microservice", "microservices", "serverless",
+    "webpack", "vite", "rollup", "babel", "eslint", "prettier",
+    "streamlit", "gradio", "plotly", "matplotlib", "seaborn",
+    "opencv", "spacy", "nltk", "gensim", "huggingface",
+    # Statistical & ML terms
+    "p-value", "chi-square", "anova", "sigmoid", "tanh",
+    "logistic", "multivariate", "eigenvalue", "eigenvalues",
+    "eigenvector", "eigenvectors", "normalization", "standardization",
+    "regularization", "regularize", "stochastic", "heuristic",
+    "metaheuristic", "metaheuristics", "bayesian", "markov",
+    "gaussian", "bernoulli", "poisson", "binomial",
+    "f1-score", "f1", "precision", "recall", "specificity",
+    "sensitivity", "auc", "roc", "rmse", "mae", "mse",
     # Institutions / common abbreviations
     "github", "gitlab", "bitbucket", "stackoverflow", "colab",
     "kaggle", "huggingface", "openai", "anthropic",
+    "ieee", "acm", "arxiv", "researchgate", "doi",
 }
 
 
@@ -75,6 +100,30 @@ _ALLOWLIST_PATTERN = _build_allowlist_pattern()
 
 def _is_cs_term(text: str) -> bool:
     return bool(_ALLOWLIST_PATTERN.search(text))
+
+
+def _is_special_line(text: str) -> bool:
+    """
+    Check if a line is a caption, heading, or equation — these should
+    be excluded from grammar checking as they use special formatting.
+    """
+    stripped = text.strip()
+    if not stripped:
+        return True
+    # Captions
+    if FIGURE_CAPTION_PATTERN.match(stripped) or TABLE_CAPTION_PATTERN.match(stripped):
+        return True
+    # Equation lines
+    if EQUATION_PATTERN.search(stripped) or EQUATION_BROAD_PATTERN.search(stripped):
+        return True
+    # Heading patterns (L0, L1, L2)
+    if HEADING_L0_PATTERN.fullmatch(stripped):
+        return True
+    if HEADING_L1_PATTERN.match(stripped):
+        return True
+    if HEADING_L2_PATTERN.match(stripped):
+        return True
+    return False
 
 
 # ── Grammar check ─────────────────────────────────────────────────────────────
@@ -113,6 +162,12 @@ def run_grammar_checks(doc: ParsedDocument) -> list[Violation]:
         "UNPAIRED_BRACKETS",
         "COMMA_PARENTHESIS_WHITESPACE",
         "EN_UNPAIRED_BRACKETS",
+        "UPPERCASE_SENTENCE_START",
+        "DASH_RULE",
+        "MORFOLOGIK_RULE_EN_US",
+        "SENTENCE_WHITESPACE",
+        "DOUBLE_PUNCTUATION",
+        "ARROWS",
     }
 
     # Detect bibliography start page to skip
@@ -131,8 +186,16 @@ def run_grammar_checks(doc: ParsedDocument) -> list[Violation]:
         if not text.strip():
             continue
 
+        # Filter out special lines (captions, headings, equations) before checking
+        lines = text.split("\n")
+        body_lines = [l for l in lines if not _is_special_line(l)]
+        body_text = "\n".join(body_lines)
+
+        if not body_text.strip():
+            continue
+
         try:
-            matches = tool.check(text)
+            matches = tool.check(body_text)
         except Exception:
             continue
 
@@ -140,7 +203,7 @@ def run_grammar_checks(doc: ParsedDocument) -> list[Violation]:
             if match.ruleId in IGNORED_RULES:
                 continue
 
-            flagged_text = text[match.offset: match.offset + match.errorLength]
+            flagged_text = body_text[match.offset: match.offset + match.errorLength]
 
             # Skip if the flagged word is a CS term
             if _is_cs_term(flagged_text):

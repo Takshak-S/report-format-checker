@@ -45,42 +45,67 @@ def _is_table_caption(text: str) -> bool:
     return bool(TABLE_CAPTION_PATTERN.match(text.strip()))
 
 
+def _is_caption_continuation(text: str) -> bool:
+    """
+    Check if a line is likely a continuation of a multi-line caption
+    (doesn't start with 'Figure' or 'Table' and is relatively short).
+    """
+    stripped = text.strip()
+    if not stripped:
+        return False
+    if FIGURE_CAPTION_PATTERN.match(stripped) or TABLE_CAPTION_PATTERN.match(stripped):
+        return False
+    # Continuation lines are typically short and don't start with heading patterns
+    return len(stripped) < 120 and not re.match(r"^\d+\.\d+", stripped)
+
+
 # ── Caption format check ──────────────────────────────────────────────────────
 
+# Accept Figure/Fig. X.Y followed by :, –, -, or . separator then description
 CAPTION_FORMAT_FIGURE = re.compile(
-    r"^Figure\s+\d+\.\d+\s*[:–\-]\s*.+", re.IGNORECASE
+    r"^(?:Figure|Fig\.?)\s+\d+\.\d+\s*[:–\-.]\s*.+", re.IGNORECASE
 )
 CAPTION_FORMAT_TABLE = re.compile(
-    r"^Table\s+\d+\.\d+\s*[:–\-]\s*.+", re.IGNORECASE
+    r"^(?:Table|Tab\.?)\s+\d+\.\d+\s*[:–\-.]\s*.+", re.IGNORECASE
 )
+
+# Patterns to detect lines starting with Figure/Table that need format checking
+FIGURE_START_PATTERN = re.compile(r"^(?:Figure|Fig\.?)\s+", re.IGNORECASE)
+TABLE_START_PATTERN = re.compile(r"^(?:Table|Tab\.?)\s+", re.IGNORECASE)
 
 
 def check_caption_format(doc: ParsedDocument) -> list[Violation]:
     violations = []
     for line in doc.lines:
         text = line.text.strip()
-        if re.match(r"^Figure\s+", text, re.IGNORECASE):
+        if FIGURE_START_PATTERN.match(text):
             if not CAPTION_FORMAT_FIGURE.match(text):
-                violations.append(Violation(
-                    category=Category.CAPTIONS,
-                    severity=Severity.WARNING,
-                    page=line.page_num,
-                    description="Figure caption format incorrect",
-                    detail=f"Expected 'Figure X.Y: Description', found: '{text[:60]}'",
-                ))
-        elif re.match(r"^Table\s+", text, re.IGNORECASE):
+                # Don't flag continuation lines
+                if not _is_caption_continuation(text):
+                    violations.append(Violation(
+                        category=Category.CAPTIONS,
+                        severity=Severity.WARNING,
+                        page=line.page_num,
+                        description="Figure caption format incorrect",
+                        detail=f"Expected 'Figure X.Y: Description', found: '{text[:60]}'",
+                    ))
+        elif TABLE_START_PATTERN.match(text):
             if not CAPTION_FORMAT_TABLE.match(text):
-                violations.append(Violation(
-                    category=Category.CAPTIONS,
-                    severity=Severity.WARNING,
-                    page=line.page_num,
-                    description="Table caption format incorrect",
-                    detail=f"Expected 'Table X.Y: Description', found: '{text[:60]}'",
-                ))
+                if not _is_caption_continuation(text):
+                    violations.append(Violation(
+                        category=Category.CAPTIONS,
+                        severity=Severity.WARNING,
+                        page=line.page_num,
+                        description="Table caption format incorrect",
+                        detail=f"Expected 'Table X.Y: Description', found: '{text[:60]}'",
+                    ))
     return violations
 
 
 # ── Figure caption position (must be BELOW image) ────────────────────────────
+
+# Wider tolerance for figure-caption proximity (30pt — images may have whitespace)
+FIGURE_CAPTION_PROXIMITY_PT = 30.0
 
 def check_figure_caption_position(doc: ParsedDocument) -> list[Violation]:
     """
@@ -106,8 +131,8 @@ def check_figure_caption_position(doc: ParsedDocument) -> list[Violation]:
             ))
             continue
 
-        # Check if any image is above the caption (image.y1 < caption.top)
-        images_above = [img for img in page_images if img.y1 <= line.top + 10]
+        # Check if any image is above the caption (image.y1 <= caption.top + tolerance)
+        images_above = [img for img in page_images if img.y1 <= line.top + FIGURE_CAPTION_PROXIMITY_PT]
         if not images_above:
             violations.append(Violation(
                 category=Category.CAPTIONS,
@@ -122,6 +147,9 @@ def check_figure_caption_position(doc: ParsedDocument) -> list[Violation]:
 
 
 # ── Table caption position (must be ABOVE table) ─────────────────────────────
+
+# Wider tolerance for table-caption proximity (30pt)
+TABLE_CAPTION_PROXIMITY_PT = 30.0
 
 def check_table_caption_position(doc: ParsedDocument) -> list[Violation]:
     """
@@ -146,8 +174,8 @@ def check_table_caption_position(doc: ParsedDocument) -> list[Violation]:
             ))
             continue
 
-        # Check if any table is below the caption (table.bbox[1] >= caption.bottom)
-        tables_below = [t for t in page_tables if t.bbox[1] >= line.bottom - 10]
+        # Check if any table is below the caption (table.bbox[1] >= caption.bottom - tolerance)
+        tables_below = [t for t in page_tables if t.bbox[1] >= line.bottom - TABLE_CAPTION_PROXIMITY_PT]
         if not tables_below:
             violations.append(Violation(
                 category=Category.CAPTIONS,
@@ -230,9 +258,17 @@ def check_caption_citations(doc: ParsedDocument) -> list[Violation]:
             continue
         ch, num = nums
         kind = "Figure" if _is_figure_caption(text) else "Table"
-        ref_pattern = re.compile(
-            rf"{kind}\s+{ch}\.{num}", re.IGNORECASE
-        )
+
+        # Also search for Fig./Tab. abbreviations
+        if kind == "Figure":
+            ref_pattern = re.compile(
+                rf"(?:Figure|Fig\.?)\s+{ch}\.{num}", re.IGNORECASE
+            )
+        else:
+            ref_pattern = re.compile(
+                rf"(?:Table|Tab\.?)\s+{ch}\.{num}", re.IGNORECASE
+            )
+
         # Count occurrences — the caption itself counts as 1, need at least 2
         matches = ref_pattern.findall(full_text)
         if len(matches) < 2:

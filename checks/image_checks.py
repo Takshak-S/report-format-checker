@@ -4,7 +4,8 @@ checks/image_checks.py
 Checks:
   1. Embedded image DPI >= 600 (via PyMuPDF xres/yres)
   2. Fallback DPI estimation via Pillow when xres=0
-  3. Graph axis label presence via pytesseract OCR on rasterized pages
+  3. Computed DPI fallback from pixel dimensions / rendered size
+  4. Graph axis label presence via pytesseract OCR on rasterized pages
 """
 from __future__ import annotations
 
@@ -46,10 +47,49 @@ def _estimate_dpi_from_bytes(img_info: ImageInfo) -> int | None:
     return None
 
 
+def _compute_dpi_from_rendered_size(img_info: ImageInfo) -> int | None:
+    """
+    Estimate DPI from pixel dimensions and rendered size on the page.
+    DPI = pixel_width / (rendered_width_in_points / 72)
+    """
+    rendered_w_pt = img_info.x1 - img_info.x0
+    rendered_h_pt = img_info.y1 - img_info.y0
+
+    if rendered_w_pt <= 0 or rendered_h_pt <= 0:
+        return None
+    if img_info.width_px <= 0 or img_info.height_px <= 0:
+        return None
+
+    dpi_x = img_info.width_px / (rendered_w_pt / 72.0)
+    dpi_y = img_info.height_px / (rendered_h_pt / 72.0)
+    return int(min(dpi_x, dpi_y))
+
+
+def _is_tiny_image(img_info: ImageInfo) -> bool:
+    """
+    Check if an image is tiny/decorative (less than 20×20 pixels
+    or rendered area < 1 sq inch = 72×72 pt²).
+    """
+    if img_info.width_px < 20 or img_info.height_px < 20:
+        return True
+    rendered_w = img_info.x1 - img_info.x0
+    rendered_h = img_info.y1 - img_info.y0
+    if rendered_w < 20 or rendered_h < 20:
+        return True
+    # Rendered area < 1 sq inch (5184 pt²)
+    if rendered_w * rendered_h < 5184:
+        return True
+    return False
+
+
 def check_image_dpi(doc: ParsedDocument) -> list[Violation]:
     violations = []
 
     for img in doc.images:
+        # Skip tiny/decorative images
+        if _is_tiny_image(img):
+            continue
+
         xres = img.xres
         yres = img.yres
 
@@ -59,15 +99,20 @@ def check_image_dpi(doc: ParsedDocument) -> list[Violation]:
             if estimated is not None:
                 xres = yres = estimated
             else:
-                # Cannot determine DPI — report as info
-                violations.append(Violation(
-                    category=Category.IMAGES,
-                    severity=Severity.INFO,
-                    page=img.page_num,
-                    description="Could not determine image DPI",
-                    detail=f"Image at ({img.x0:.0f}, {img.y0:.0f}) — verify manually that DPI ≥ {MIN_IMAGE_DPI}",
-                ))
-                continue
+                # Try computing from pixel dimensions / rendered size
+                computed = _compute_dpi_from_rendered_size(img)
+                if computed is not None:
+                    xres = yres = computed
+                else:
+                    # Cannot determine DPI — report as info
+                    violations.append(Violation(
+                        category=Category.IMAGES,
+                        severity=Severity.INFO,
+                        page=img.page_num,
+                        description="Could not determine image DPI",
+                        detail=f"Image at ({img.x0:.0f}, {img.y0:.0f}) — verify manually that DPI ≥ {MIN_IMAGE_DPI}",
+                    ))
+                    continue
 
         min_dpi = min(xres, yres)
         if min_dpi < MIN_IMAGE_DPI:
@@ -128,11 +173,20 @@ def _has_axis_labels_via_ocr(png_bytes: bytes) -> dict:
 
     text_lower = text.lower()
 
-    # Heuristic: check for common axis label words
-    x_keywords = ["x-axis", "x axis", "xlabel", "x (", "(x)", "time", "date",
-                   "frequency", "input", "epoch", "iteration", "sample"]
-    y_keywords = ["y-axis", "y axis", "ylabel", "y (", "(y)", "accuracy",
-                   "loss", "value", "count", "score", "rate", "output"]
+    # Expanded heuristic: check for common axis label words
+    x_keywords = [
+        "x-axis", "x axis", "xlabel", "x (", "(x)", "time", "date",
+        "frequency", "input", "epoch", "iteration", "sample", "number",
+        "batch", "step", "class", "category", "index", "feature",
+        "trial", "round", "layer", "dimension",
+    ]
+    y_keywords = [
+        "y-axis", "y axis", "ylabel", "y (", "(y)", "accuracy",
+        "loss", "value", "count", "score", "rate", "output",
+        "percentage", "precision", "recall", "f1", "error",
+        "performance", "probability", "frequency", "magnitude",
+        "number of", "average", "mean", "median",
+    ]
 
     x_ok = any(kw in text_lower for kw in x_keywords)
     y_ok = any(kw in text_lower for kw in y_keywords)

@@ -12,55 +12,82 @@ MARGIN_LEFT_PT   = 108.0  # 1.5 inch  (binding margin)
 MARGIN_RIGHT_PT  = 72.0   # 1.0 inch
 MARGIN_TOP_PT    = 72.0   # 1.0 inch
 MARGIN_BOTTOM_PT = 72.0   # 1.0 inch
-MARGIN_TOLERANCE_PT = 6.0  # ±6 pt tolerance (~2 mm)
+MARGIN_TOLERANCE_PT = 8.0  # ±8 pt tolerance (~2.8 mm) — updated from 6 pt
 
 # ── Fonts ──────────────────────────────────────────────────────────────────────
 REQUIRED_FONT_FAMILY = "TimesNewRoman"   # canonical name used for matching
 FONT_ALIASES = [
     "timesnewroman", "times new roman", "times-new-roman",
-    "timesnewromanpsmt", "timesnewroman,", "times"
+    "timesnewromanpsmt", "timesnewromanps", "timesnewromanps-",
+    "timesnewroman,", "times-roman", "times",
+    "timesnewromanps-boldmt", "timesnewromanps-italicmt",
+    "timesnewromanps-bolditalicmt",
+    # Nimbus Roman No. 9L — open-source TNR equivalent (common in LaTeX PDFs)
+    "nimbusromno9l", "nimbusromno9l-regu", "nimbusromno9l-medi",
+    "nimbusromno9l-regual", "nimbusromno9l-mediital",
+    "nimbusromno9l-bold", "nimbusromno9l-boldital",
+    # Other common TNR equivalents
+    "nimbus roman", "nimbus roman no9 l",
+    "freeserif", "liberation serif", "liberationserif",
+    "tinos",  # Google's TNR metric-compatible font
 ]
 
 FONT_SIZE_BODY       = 12.0
 FONT_SIZE_HEADING_L1 = 14.0
 FONT_SIZE_HEADING_L0 = 16.0
 FONT_SIZE_CAPTION    = 10.0
-FONT_SIZE_TOLERANCE  = 0.8   # ±0.8 pt tolerance
+FONT_SIZE_TOLERANCE  = 1.5   # ±1.5 pt tolerance — handles real-world PDF rendering (e.g., 17.2pt ≈ 16pt)
 
 # ── Spacing & Alignment ────────────────────────────────────────────────────────
 LINE_SPACING_FACTOR  = 1.5   # 1.5× line spacing
-LINE_SPACING_TOLERANCE = 0.25
-JUSTIFICATION_TOLERANCE_PT = 8.0  # max allowed right-edge variance for justified text
+LINE_SPACING_TOLERANCE = 0.3  # updated from 0.25
+JUSTIFICATION_TOLERANCE_PT = 10.0  # max allowed right-edge variance — updated from 8.0
 
 # ── Image Quality ──────────────────────────────────────────────────────────────
 MIN_IMAGE_DPI = 600
 
+# ── Header / Footer exclusion zones ───────────────────────────────────────────
+HEADER_ZONE_PT = 45.0   # content within this distance from top is header/footer
+FOOTER_ZONE_PT = 45.0   # content within this distance from bottom is header/footer
+
 # ── Heading Patterns ──────────────────────────────────────────────────────────
 import re
 
-# Level 0: UPPERCASE chapter title  e.g. "INTRODUCTION"
-HEADING_L0_PATTERN = re.compile(r"^[A-Z][A-Z\s\-&/]+$")
+# Level 0: UPPERCASE chapter title  e.g. "INTRODUCTION", "CHAPTER 1 INTRODUCTION", "CHAPTER1"
+HEADING_L0_PATTERN = re.compile(r"^(?:CHAPTER\s*\d+[\s.:–-]*)?[A-Z][A-Z\s\-&/,\d]+$")
 
-# Level 1: "1.1 SOME HEADING"  (decimal + uppercase words)
-HEADING_L1_PATTERN = re.compile(r"^\d+\.\d+\s+[A-Z][A-Z\s\-&/:]+$")
+# Level 1: "1.1 SOME HEADING"  (decimal + uppercase words — allows colons, commas, parens)
+HEADING_L1_PATTERN = re.compile(r"^\d+\.\d+\s+[A-Z][A-Z\s\-&/:,()]+$")
 
-# Level 2: "1.1.1 Some Heading"  (two decimals + Title Case)
-HEADING_L2_PATTERN = re.compile(r"^\d+\.\d+\.\d+\s+[A-Z][A-Za-z\s\-&/:]+$")
+# Level 2: "1.1.1 Some Heading"  (two decimals + Title Case — allows mixed case)
+HEADING_L2_PATTERN = re.compile(r"^\d+\.\d+\.\d+\s+[A-Z][A-Za-z\s\-&/:,()]+$")
 
-# Caption patterns
+# Caption patterns — support :, –, -, . separators
 FIGURE_CAPTION_PATTERN = re.compile(
-    r"^Figure\s+\d+\.\d+\s*[:–\-]", re.IGNORECASE
+    r"^(?:Figure|Fig\.?)\s+\d+\.\d+\s*[:–\-.]\s*", re.IGNORECASE
 )
 TABLE_CAPTION_PATTERN = re.compile(
-    r"^Table\s+\d+\.\d+\s*[:–\-]", re.IGNORECASE
+    r"^(?:Table|Tab\.?)\s+\d+\.\d+\s*[:–\-.]\s*", re.IGNORECASE
 )
 
-# Equation pattern: "(2.1)" at end of line
+# Equation pattern: "(2.1)" at end of line or preceded by whitespace
 EQUATION_PATTERN = re.compile(r"\(\d+\.\d+\)\s*$")
 
-# In-text citation: [Author, Year] or (Author, Year)
+# Broader equation detection (also matches mid-line numbered equations)
+EQUATION_BROAD_PATTERN = re.compile(r"\s\(\d+\.\d+\)")
+
+# In-text citation patterns
+# APA author-year: [Author, Year] or (Author, Year) or (Author et al., Year)
 INTEXT_CITATION_PATTERN = re.compile(
-    r"[\[\(][A-Z][a-zA-Z\s\-]+,?\s*\d{4}[a-z]?\s*[\]\)]"
+    r"[\[(]"
+    r"(?:[A-Z][a-zA-Z\s\-]+(?:\s+et\s+al\.?)?,?\s*\d{4}[a-z]?"
+    r"|[A-Z][a-zA-Z\s\-]+\s+&\s+[A-Z][a-zA-Z\s\-]+,?\s*\d{4}[a-z]?)"
+    r"\s*[\])]"
+)
+
+# Numeric citation: [1], [2], [1-3], [1,2,3], [1, 2]
+NUMERIC_CITATION_PATTERN = re.compile(
+    r"\[(\d+(?:\s*[-–,]\s*\d+)*)\]"
 )
 
 # ── Mandatory Chapters ─────────────────────────────────────────────────────────

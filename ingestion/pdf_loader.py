@@ -119,6 +119,10 @@ def _normalize_font(raw: str) -> tuple[str, bool, bool]:
 
 # ── Line aggregation from pdfplumber chars ────────────────────────────────────
 
+# Y-proximity threshold for grouping characters into lines (widened from 3.0)
+LINE_GROUP_TOLERANCE = 4.0
+
+
 def _aggregate_lines(plumber_page, page_num: int) -> list[LineInfo]:
     """
     Group pdfplumber characters into logical lines by Y-coordinate proximity,
@@ -150,12 +154,12 @@ def _aggregate_lines(plumber_page, page_num: int) -> list[LineInfo]:
     # Sort by top then x0
     chars.sort(key=lambda c: (round(c.top, 1), c.x0))
 
-    # Group into lines: chars with top within 3 pts are on the same line
+    # Group into lines: chars with top within LINE_GROUP_TOLERANCE pts are on the same line
     lines: list[LineInfo] = []
     current_group: list[CharInfo] = [chars[0]]
 
     for ch in chars[1:]:
-        if abs(ch.top - current_group[0].top) < 3.0:
+        if abs(ch.top - current_group[0].top) < LINE_GROUP_TOLERANCE:
             current_group.append(ch)
         else:
             lines.append(_make_line(current_group, page_num))
@@ -175,11 +179,40 @@ def _dominant(values: list) -> any:
 
 def _make_line(chars: list[CharInfo], page_num: int) -> LineInfo:
     chars.sort(key=lambda c: c.x0)
-    text = "".join(c.text for c in chars).strip()
-    fonts = [c.fontname for c in chars]
+
+    # Build text with space insertion for gaps between characters
+    # When chars have a horizontal gap > ~25% of average char width, insert a space
+    text_parts = []
+    if chars:
+        avg_char_width = sum(c.x1 - c.x0 for c in chars) / len(chars) if chars else 5.0
+        space_threshold = max(avg_char_width * 0.25, 1.5)  # at least 1.5pt gap = space
+
+        text_parts.append(chars[0].text)
+        for i in range(1, len(chars)):
+            gap = chars[i].x0 - chars[i - 1].x1
+            if gap > space_threshold:
+                text_parts.append(" ")
+            text_parts.append(chars[i].text)
+
+    text = "".join(text_parts).strip()
+
+    # For dominant font/size calculation, filter out superscript/subscript characters
+    # (chars significantly smaller than the dominant size)
     sizes = [c.size for c in chars]
-    bolds   = [c.bold for c in chars]
-    italics = [c.italic for c in chars]
+    raw_dominant_size = _dominant(sizes) or 12.0
+
+    # Only consider "normal-sized" characters for dominant calculations
+    # (chars within 70% of the dominant size)
+    normal_chars = [
+        c for c in chars
+        if c.size >= raw_dominant_size * 0.70
+    ] or chars  # fallback to all if filter removes everything
+
+    fonts = [c.fontname for c in normal_chars]
+    normal_sizes = [c.size for c in normal_chars]
+    bolds   = [c.bold for c in normal_chars]
+    italics = [c.italic for c in normal_chars]
+
     return LineInfo(
         text=text,
         chars=chars,
@@ -189,9 +222,10 @@ def _make_line(chars: list[CharInfo], page_num: int) -> LineInfo:
         x0=min(c.x0 for c in chars),
         x1=max(c.x1 for c in chars),
         fontname=_dominant(fonts),
-        size=_dominant(sizes),
-        bold=sum(bolds) > len(bolds) / 2,
-        italic=sum(italics) > len(italics) / 2,
+        size=_dominant(normal_sizes),
+        # Use 60% majority for bold/italic (more robust than 50%)
+        bold=sum(bolds) > len(bolds) * 0.6,
+        italic=sum(italics) > len(italics) * 0.6,
     )
 
 

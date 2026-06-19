@@ -10,21 +10,33 @@ from __future__ import annotations
 
 import re
 from ingestion.pdf_loader import ParsedDocument, LineInfo
-from utils.constants import EQUATION_PATTERN, Severity, Category
+from utils.constants import EQUATION_PATTERN, EQUATION_BROAD_PATTERN, Severity, Category
 from utils.error_model import Violation
 
 
 def _extract_eq_number(text: str) -> tuple[int, int] | None:
+    """Extract equation number from text, checking end-of-line first, then mid-line."""
+    # Try end-of-line first (standard format)
     m = re.search(r"\((\d+)\.(\d+)\)\s*$", text.strip())
+    if m:
+        return int(m.group(1)), int(m.group(2))
+    # Try mid-line (broader format)
+    m = re.search(r"\((\d+)\.(\d+)\)", text.strip())
     if m:
         return int(m.group(1)), int(m.group(2))
     return None
 
 
-def _is_right_aligned(line: LineInfo, page_width: float, margin_right: float, tol: float = 15.0) -> bool:
-    """Heuristic: equation number label should be near the right margin."""
+def _is_right_aligned(line: LineInfo, page_width: float, margin_right: float, tol: float = 20.0) -> bool:
+    """Heuristic: equation number label should be near the right margin. Tolerance increased to 20pt."""
     expected_right = page_width - margin_right
     return abs(line.x1 - expected_right) <= tol
+
+
+def _is_equation_line(text: str) -> bool:
+    """Check if a line contains an equation number pattern."""
+    stripped = text.strip()
+    return bool(EQUATION_PATTERN.search(stripped) or EQUATION_BROAD_PATTERN.search(stripped))
 
 
 def run_equation_checks(doc: ParsedDocument) -> list[Violation]:
@@ -32,7 +44,7 @@ def run_equation_checks(doc: ParsedDocument) -> list[Violation]:
     equation_lines = [
         (line, doc.page_sizes[line.page_num - 1][0])
         for line in doc.lines
-        if EQUATION_PATTERN.search(line.text.strip())
+        if _is_equation_line(line.text)
     ]
 
     counters: dict[int, int] = {}  # chapter → last equation number
@@ -56,16 +68,17 @@ def run_equation_checks(doc: ParsedDocument) -> list[Violation]:
             ))
         counters[ch] = eq_num
 
-        # Right-alignment check
+        # Right-alignment check (only for lines with end-of-line equation numbers)
         from utils.constants import MARGIN_RIGHT_PT
-        if not _is_right_aligned(line, page_width, MARGIN_RIGHT_PT):
-            violations.append(Violation(
-                category=Category.EQUATIONS,
-                severity=Severity.INFO,
-                page=line.page_num,
-                description="Equation number may not be right-aligned",
-                detail=f"Line right edge at {line.x1:.1f} pt, expected near {page_width - MARGIN_RIGHT_PT:.1f} pt",
-                location=line.text[:60],
-            ))
+        if EQUATION_PATTERN.search(line.text.strip()):
+            if not _is_right_aligned(line, page_width, MARGIN_RIGHT_PT):
+                violations.append(Violation(
+                    category=Category.EQUATIONS,
+                    severity=Severity.INFO,
+                    page=line.page_num,
+                    description="Equation number may not be right-aligned",
+                    detail=f"Line right edge at {line.x1:.1f} pt, expected near {page_width - MARGIN_RIGHT_PT:.1f} pt",
+                    location=line.text[:60],
+                ))
 
     return violations
