@@ -122,3 +122,32 @@ class Category:
     CITATIONS      = "Citations & Bibliography"
     GRAMMAR        = "Grammar & Spelling"
     GRAPHS         = "Graphs"
+    TOC            = "Table of Contents"
+    SUBTOPICS      = "Subtopic Structure"
+    IMAGE_DIMS     = "Image Dimensions"
+    RESEARCH       = "Research Growth"
+    PLAGIARISM     = "Plagiarism"
+    OVERALL_SCORE  = "Overall Score"
+
+# ── Table of Contents ──────────────────────────────────────────────────────────
+TOC_HEADER_PATTERN = re.compile(
+    r"^(table\s+of\s+contents|contents|list\s+of\s+figures|list\s+of\s+tables)\s*$",
+    re.IGNORECASE | re.MULTILINE,
+)
+TOC_ENTRY_PATTERN = re.compile(
+    r"^(.+?)\s+(?:\.{2,}\s*|\s+)\d+\s*$"
+)
+
+# ── Subtopic structure ─────────────────────────────────────────────────────────
+MIN_LINES_FOR_SUBTOPICS = 25          # body lines between L1 headings before subtopics expected
+MIN_WORDS_FOR_SUBTOPICS = 300
+
+# ── Image dimensions ───────────────────────────────────────────────────────────
+MIN_IMAGE_RENDERED_PT = 72.0          # min 1 inch rendered width/height for significant images
+MAX_IMAGE_PAGE_RATIO  = 0.85          # image should not exceed 85% of page width/height
+MIN_IMAGE_PIXELS      = 200           # min pixel dimension for non-decorative images
+
+# ── Plagiarism ─────────────────────────────────────────────────────────────────
+PLAGIARISM_SIMILARITY_THRESHOLD = 0.72   # SequenceMatcher ratio for sentence match
+PLAGIARISM_MIN_SENTENCE_LEN     = 40       # ignore very short sentences
+PLAGIARISM_NGRAM_SIZE           = 8        # character n-gram size for fingerprinting

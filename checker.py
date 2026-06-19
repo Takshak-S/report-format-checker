@@ -20,7 +20,13 @@ from checks.equation_checks import run_equation_checks
 from checks.chapter_checks  import run_chapter_checks
 from checks.citation_checks import run_citation_checks
 from checks.grammar_checks  import run_grammar_checks
+from checks.toc_checks        import run_toc_checks
+from checks.subtopic_checks   import run_subtopic_checks
+from checks.image_dimension_checks import run_image_dimension_checks
+from checks.research_growth_checks import run_research_growth_checks
+from checks.plagiarism_checks import run_plagiarism_checks
 from utils.error_model import ViolationCollector
+from utils.scoring import score_to_violation
 
 
 # ── Check pipeline ────────────────────────────────────────────────────────────
@@ -36,6 +42,11 @@ CHECKS: list[tuple[str, Callable]] = [
     ("Chapter Structure",      run_chapter_checks),
     ("Citations & References", run_citation_checks),
     ("Grammar & Spelling",     run_grammar_checks),
+    ("Table of Contents",      run_toc_checks),
+    ("Subtopic Structure",     run_subtopic_checks),
+    ("Image Dimensions",       run_image_dimension_checks),
+    ("Research Growth",        run_research_growth_checks),
+    ("Plagiarism",             run_plagiarism_checks),
 ]
 
 
@@ -80,6 +91,12 @@ def run_checks(
                 description=f"Check '{label}' encountered an internal error",
                 detail=str(e),
             ))
+
+    # Overall score (computed after all checks)
+    try:
+        collector.add(score_to_violation(collector))
+    except Exception:
+        pass
 
     if progress_callback:
         progress_callback("Done", total, total)
