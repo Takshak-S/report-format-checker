@@ -41,7 +41,7 @@ FONT_SIZE_TOLERANCE  = 1.5   # ±1.5 pt tolerance — handles real-world PDF ren
 # ── Spacing & Alignment ────────────────────────────────────────────────────────
 LINE_SPACING_FACTOR  = 1.5   # 1.5× line spacing
 LINE_SPACING_TOLERANCE = 0.3  # updated from 0.25
-JUSTIFICATION_TOLERANCE_PT = 10.0  # max allowed right-edge variance — updated from 8.0
+JUSTIFICATION_TOLERANCE_PT = 8.0  # max allowed right-edge variance — updated from 8.0
 
 # ── Image Quality ──────────────────────────────────────────────────────────────
 MIN_IMAGE_DPI = 600
