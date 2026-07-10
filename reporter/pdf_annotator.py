@@ -34,6 +34,10 @@ _COLORS = {
         "highlight": (1.0, 0.93, 0.6),    # light amber fill
         "stroke":    (0.8, 0.6, 0.0),      # amber border
     },
+    Severity.INFO: {
+        "highlight": (0.8, 0.9, 1.0),     # light blue fill
+        "stroke":    (0.2, 0.5, 0.8),      # blue border
+    },
 }
 
 # Margin note positioning
@@ -95,16 +99,26 @@ def _add_line_highlight(
     highlight.set_opacity(0.45)
     highlight.update()
 
-    # 2) Add a small margin note icon linked to the highlight
+    # 2) Add visible text on the right margin
     popup_text = _build_popup_text(violation)
-    note_x = page.rect.width - _NOTE_X_OFFSET
-    point = fitz.Point(note_x, rect.y0)
+    margin_width = 150
+    # Create rect for the freetext annotation on the right edge
+    text_rect = fitz.Rect(page.rect.width - margin_width, rect.y0, page.rect.width - 5, rect.y0 + 50)
+    
+    # Adjust y position if we are overlapping with previous notes
+    if note_y > text_rect.y0:
+        text_rect = fitz.Rect(page.rect.width - margin_width, note_y, page.rect.width - 5, note_y + 50)
 
-    note = page.add_text_annot(point, popup_text, icon="Comment")
-    note.set_colors(stroke=colors["stroke"])
+    # FreeText annotation
+    note = page.add_freetext_annot(
+        text_rect, popup_text, fontsize=7, fontname="helv", 
+        text_color=colors["stroke"], fill_color=(1.0, 1.0, 1.0)
+    )
     note.update()
 
-    return note_y
+    # Estimate height of text box (roughly 10pt per line)
+    lines = len(popup_text.split('\n'))
+    return text_rect.y0 + (lines * 10) + 10
 
 
 def _add_page_note(
@@ -119,14 +133,17 @@ def _add_page_note(
     Returns the updated note_y position.
     """
     popup_text = _build_popup_text(violation)
-    note_x = page.rect.width - _NOTE_X_OFFSET
-    point = fitz.Point(note_x, note_y)
+    margin_width = 150
+    text_rect = fitz.Rect(page.rect.width - margin_width, note_y, page.rect.width - 5, note_y + 50)
 
-    note = page.add_text_annot(point, popup_text, icon="Note")
-    note.set_colors(stroke=colors["stroke"])
+    note = page.add_freetext_annot(
+        text_rect, popup_text, fontsize=7, fontname="helv", 
+        text_color=colors["stroke"], fill_color=(1.0, 1.0, 1.0)
+    )
     note.update()
 
-    return note_y + 25  # space out stacked notes
+    lines = len(popup_text.split('\n'))
+    return note_y + (lines * 10) + 10  # space out stacked notes
 
 
 def _add_legend(page: fitz.Page) -> None:
@@ -189,10 +206,7 @@ def generate_annotated_pdf(
         note_y = 50.0  # starting y for margin notes on this page
 
         for v in violations:
-            # Skip INFO violations
-            if v.severity == Severity.INFO:
-                continue
-
+            # Note: INFO is no longer skipped as requested
             colors = _COLORS.get(v.severity)
             if not colors:
                 continue

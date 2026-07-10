@@ -280,7 +280,7 @@ def check_caption_citations(doc: ParsedDocument) -> list[Violation]:
         if len(matches) < 2:
             violations.append(Violation(
                 category=Category.CAPTIONS,
-                severity=Severity.WARNING,
+                severity=Severity.INFO,
                 page=line.page_num,
                 description=f"{kind} {ch}.{num} is not cited in the body text",
                 location=text[:60],

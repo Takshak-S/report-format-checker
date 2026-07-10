@@ -17,6 +17,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 from checker import run_checks
 from reporter.report_generator import generate_report
+from reporter.pdf_report_generator import generate_pdf_report
 from reporter.pdf_annotator import generate_annotated_pdf
 from utils.constants import Severity
 
@@ -132,10 +133,13 @@ def main():
                 print(line)
             print()
 
-    # ── Generate Excel report ─────────────────────────────────────────────────
+    # ── Generate Excel and PDF reports ────────────────────────────────────────
     if not args.no_report:
         report_path = generate_report(collector, str(pdf_path), args.output)
-        print(f"  {_green('✓')} Report saved: {report_path}")
+        pdf_report_out = str(Path(args.output).with_suffix('.pdf'))
+        pdf_report_path = generate_pdf_report(collector, str(pdf_path), pdf_report_out)
+        print(f"  {_green('✓')} Excel Report saved: {report_path}")
+        print(f"  {_green('✓')} PDF Report saved: {pdf_report_path}")
 
     # ── Generate annotated PDF ────────────────────────────────────────────────
     if not args.no_annotated_pdf and not args.no_report:

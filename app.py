@@ -13,6 +13,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 from checker import run_checks
 from reporter.report_generator import generate_report
+from reporter.pdf_report_generator import generate_pdf_report
 from reporter.pdf_annotator import generate_annotated_pdf
 from utils.constants import Severity, Category
 
@@ -115,6 +116,20 @@ if st.button("▶ Run Format Check", type="primary", use_container_width=True):
             data=f.read(),
             file_name=f"{Path(uploaded.name).stem}_format_report.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            use_container_width=True,
+        )
+
+    # ── Generate & download PDF summary report ────────────────────────────────
+    with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as out_pdf_tmp:
+        out_pdf_path = out_pdf_tmp.name
+
+    pdf_report_path = generate_pdf_report(collector, uploaded.name, out_pdf_path)
+    with open(pdf_report_path, "rb") as f:
+        st.download_button(
+            label="⬇ Download PDF Summary Report",
+            data=f.read(),
+            file_name=f"{Path(uploaded.name).stem}_format_report.pdf",
+            mime="application/pdf",
             use_container_width=True,
         )
 

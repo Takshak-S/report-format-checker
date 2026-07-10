@@ -38,19 +38,19 @@ FONT_SIZE_BODY       = 12.0
 FONT_SIZE_HEADING_L1 = 14.0
 FONT_SIZE_HEADING_L0 = 16.0
 FONT_SIZE_CAPTION    = 10.0
-FONT_SIZE_TOLERANCE  = 3.0   # ±3 pt tolerance — handles real-world PDF rendering variance
+FONT_SIZE_TOLERANCE  = 3.5   # ±3.5 pt tolerance — handles real-world PDF rendering variance
 
 # ── Spacing & Alignment ────────────────────────────────────────────────────────
 LINE_SPACING_FACTOR  = 1.5   # 1.5× line spacing
-LINE_SPACING_TOLERANCE = 0.3  # updated from 0.25
+LINE_SPACING_TOLERANCE = 0.5  # increased from 0.3 to reduce false positives
 JUSTIFICATION_TOLERANCE_PT = 8.0  # max allowed right-edge variance — updated from 8.0
 
 # ── Image Quality ──────────────────────────────────────────────────────────────
 MIN_IMAGE_DPI = 600
 
 # ── Header / Footer exclusion zones ───────────────────────────────────────────
-HEADER_ZONE_PT = 45.0   # content within this distance from top is header/footer
-FOOTER_ZONE_PT = 45.0   # content within this distance from bottom is header/footer
+HEADER_ZONE_PT = 72.0   # content within this distance from top is header/footer
+FOOTER_ZONE_PT = 72.0   # content within this distance from bottom is header/footer
 
 # ── Heading Patterns ──────────────────────────────────────────────────────────
 
@@ -80,10 +80,8 @@ EQUATION_BROAD_PATTERN = re.compile(r"\s\(\d+\.\d+\)")
 # In-text citation patterns
 # APA author-year: [Author, Year] or (Author, Year) or (Author et al., Year)
 INTEXT_CITATION_PATTERN = re.compile(
-    r"[\[(]"
-    r"(?:[A-Z][a-zA-Z\s\-]+(?:\s+et\s+al\.?)?,?\s*\d{4}[a-z]?"
-    r"|[A-Z][a-zA-Z\s\-]+\s+&\s+[A-Z][a-zA-Z\s\-]+,?\s*\d{4}[a-z]?)"
-    r"\s*[\])]"
+    r"(?:[A-Z][a-zA-Z\s\-]+(?:(?:,\s*|\s+and\s+|\s+&\s+)[A-Z][a-zA-Z\s\-]+|\s+et\s+al\.?)?,?\s*[\[(]\d{4}[a-z]?[\])]"
+    r"|[\[(][A-Z][a-zA-Z\s\-]+(?:(?:,\s*|\s+and\s+|\s+&\s+)[A-Z][a-zA-Z\s\-]+|\s+et\s+al\.?)?,?\s*\d{4}[a-z]?[\])])"
 )
 
 # Numeric citation: [1], [2], [1-3], [1,2,3], [1, 2]

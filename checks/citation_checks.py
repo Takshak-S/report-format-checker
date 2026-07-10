@@ -202,7 +202,7 @@ def run_citation_checks(doc: ParsedDocument) -> list[Violation]:
         if not matched:
             violations.append(Violation(
                 category=Category.CITATIONS,
-                severity=Severity.ERROR,
+                severity=Severity.INFO,
                 page=page_num,
                 description="In-text citation has no matching bibliography entry",
                 detail=f"Author '{author}', Year '{year}' not found in references",
@@ -218,7 +218,7 @@ def run_citation_checks(doc: ParsedDocument) -> list[Violation]:
         if not cited:
             violations.append(Violation(
                 category=Category.CITATIONS,
-                severity=Severity.WARNING,
+                severity=Severity.INFO,
                 page=bib_start_page,
                 description="Bibliography entry never cited in the body text",
                 detail=f"Author '{bk_author}', Year '{bk_year}'",

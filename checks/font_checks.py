@@ -129,6 +129,9 @@ def _check_line_font(line: LineInfo) -> list[Violation]:
     violations = []
     element = _classify_line(line)
 
+    if _is_code_font(line.fontname):
+        return violations
+
     # ── Font family check (applies to all elements)
     if not _is_times_new_roman(line.fontname):
         violations.append(Violation(
@@ -166,7 +169,7 @@ def _check_line_font(line: LineInfo) -> list[Violation]:
     if element == "heading_l1" and not line.bold:
         violations.append(Violation(
             category=Category.FONT,
-            severity=Severity.WARNING,
+            severity=Severity.INFO,
             page=line.page_num,
             description="Level-1 heading should be bold",
             location=line.text[:60],
