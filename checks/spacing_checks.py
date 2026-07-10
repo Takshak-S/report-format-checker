@@ -97,6 +97,19 @@ def check_line_spacing(doc: ParsedDocument) -> list[Violation]:
 
 # ── Text alignment (justified) ────────────────────────────────────────────────
 
+import re
+
+BULLET_PATTERN = re.compile(r"^\s*([•\-\*\u2022\u25cf]|(?:\d+|[a-zA-Z])[\.)])")
+
+def _is_code_font(fontname: str) -> bool:
+    if not fontname:
+        return False
+    lower = fontname.lower()
+    return any(sub in lower for sub in [
+        "mono", "courier", "consolas", "typewriter", "teletype", "cmtt", "ectt", "lmtt", "sfmono",
+        "fixed", "code", "ocr", "screen", "lucida console"
+    ])
+
 def check_alignment(doc: ParsedDocument) -> list[Violation]:
     """
     For each page, collect right-edge (x1) values of body text lines.
@@ -117,6 +130,8 @@ def check_alignment(doc: ParsedDocument) -> list[Violation]:
         full_lines = [
             l for l in lines
             if _is_body_text(l)
+            and not _is_code_font(l.fontname)
+            and not BULLET_PATTERN.match(l.text.strip())
             and (l.x1 - l.x0) > min_line_width
             and l.top >= HEADER_ZONE_PT
             and l.top <= (page_h - FOOTER_ZONE_PT)
@@ -126,8 +141,16 @@ def check_alignment(doc: ParsedDocument) -> list[Violation]:
             continue
 
         right_edges = [l.x1 for l in full_lines]
+        # Sort and discard the smallest 20% of edges (paragraph endings/shorter lines)
+        right_edges.sort()
+        cutoff = max(1, int(len(right_edges) * 0.20))
+        filtered_edges = right_edges[cutoff:]
+
+        if len(filtered_edges) < 4:
+            continue
+
         try:
-            stdev = statistics.stdev(right_edges)
+            stdev = statistics.stdev(filtered_edges)
         except statistics.StatisticsError:
             continue
 

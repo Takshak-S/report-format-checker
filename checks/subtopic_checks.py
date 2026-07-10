@@ -56,24 +56,23 @@ def check_subtopic_separation(doc: ParsedDocument) -> list[Violation]:
     """
     violations = []
     headings = extract_headings(doc)
-    l1_headings = [h for h in headings if h.level == 1]
 
-    if not l1_headings:
-        return violations
+    for idx, h in enumerate(headings):
+        if h.level != 1:
+            continue
 
-    for idx, h in enumerate(l1_headings):
-        if idx + 1 < len(l1_headings):
-            next_h = l1_headings[idx + 1]
-            end_page, end_y = next_h.page_num, next_h.line.top
-        else:
-            end_page, end_y = doc.page_count, float("inf")
+        end_page, end_y = doc.page_count, float("inf")
+        for next_h in headings[idx + 1:]:
+            # A section under an L1 heading ends at the next L0 (new chapter) or L1 heading.
+            if next_h.level in (0, 1):
+                end_page, end_y = next_h.page_num, next_h.line.top
+                break
 
         subtopics_in_section = [
-            sh for sh in headings
+            sh for sh in headings[idx + 1:]
             if sh.level in (2, 3)
             and sh.page_num >= h.page_num
             and (sh.page_num < end_page or (sh.page_num == end_page and sh.line.top < end_y))
-            and sh.line.top > h.line.top
         ]
 
         lines, words = _count_body_content(
@@ -91,6 +90,7 @@ def check_subtopic_separation(doc: ParsedDocument) -> list[Violation]:
                     f"but no L2/L3 subtopic headings to separate content"
                 ),
                 location=h.text[:60],
+                bbox=(h.line.x0, h.line.top, h.line.x1, h.line.bottom),
             ))
 
     return violations
@@ -122,6 +122,7 @@ def check_subtopic_numbering(doc: ParsedDocument) -> list[Violation]:
                         description="Subtopic chapter number does not match parent section",
                         detail=f"Subtopic '{h.text[:50]}' uses chapter {sub_ch}, expected {current_l1_chapter}",
                         location=h.text[:60],
+                        bbox=(h.line.x0, h.line.top, h.line.x1, h.line.bottom),
                     ))
 
     return violations

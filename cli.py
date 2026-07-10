@@ -17,6 +17,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 from checker import run_checks
 from reporter.report_generator import generate_report
+from reporter.pdf_annotator import generate_annotated_pdf
 from utils.constants import Severity
 
 try:
@@ -56,6 +57,10 @@ def main():
     parser.add_argument(
         "--no-report", action="store_true",
         help="Print results to console only, skip Excel generation",
+    )
+    parser.add_argument(
+        "--no-annotated-pdf", action="store_true",
+        help="Skip generating the highlighted/annotated PDF",
     )
     args = parser.parse_args()
 
@@ -131,6 +136,14 @@ def main():
     if not args.no_report:
         report_path = generate_report(collector, str(pdf_path), args.output)
         print(f"  {_green('✓')} Report saved: {report_path}")
+
+    # ── Generate annotated PDF ────────────────────────────────────────────────
+    if not args.no_annotated_pdf and not args.no_report:
+        annotated_path = generate_annotated_pdf(
+            collector,
+            str(pdf_path),
+        )
+        print(f"  {_green('✓')} Highlighted PDF saved: {annotated_path}")
 
     sys.exit(0 if summary["errors"] == 0 else 1)
 

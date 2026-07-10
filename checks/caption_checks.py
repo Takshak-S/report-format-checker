@@ -88,6 +88,7 @@ def check_caption_format(doc: ParsedDocument) -> list[Violation]:
                         page=line.page_num,
                         description="Figure caption format incorrect",
                         detail=f"Expected 'Figure X.Y: Description', found: '{text[:60]}'",
+                        bbox=(line.x0, line.top, line.x1, line.bottom),
                     ))
         elif TABLE_START_PATTERN.match(text):
             if not CAPTION_FORMAT_TABLE.match(text):
@@ -98,6 +99,7 @@ def check_caption_format(doc: ParsedDocument) -> list[Violation]:
                         page=line.page_num,
                         description="Table caption format incorrect",
                         detail=f"Expected 'Table X.Y: Description', found: '{text[:60]}'",
+                        bbox=(line.x0, line.top, line.x1, line.bottom),
                     ))
     return violations
 
@@ -128,6 +130,7 @@ def check_figure_caption_position(doc: ParsedDocument) -> list[Violation]:
                 page=line.page_num,
                 description="Figure caption found but no image detected on this page",
                 location=text[:60],
+                bbox=(line.x0, line.top, line.x1, line.bottom),
             ))
             continue
 
@@ -141,6 +144,7 @@ def check_figure_caption_position(doc: ParsedDocument) -> list[Violation]:
                 description="Figure caption is not placed below its image",
                 detail="No image found above this caption on the page",
                 location=text[:60],
+                bbox=(line.x0, line.top, line.x1, line.bottom),
             ))
 
     return violations
@@ -171,6 +175,7 @@ def check_table_caption_position(doc: ParsedDocument) -> list[Violation]:
                 page=line.page_num,
                 description="Table caption found but no table detected on this page",
                 location=text[:60],
+                bbox=(line.x0, line.top, line.x1, line.bottom),
             ))
             continue
 
@@ -184,6 +189,7 @@ def check_table_caption_position(doc: ParsedDocument) -> list[Violation]:
                 description="Table title is not placed above its table",
                 detail="No table found below this caption on the page",
                 location=text[:60],
+                bbox=(line.x0, line.top, line.x1, line.bottom),
             ))
 
     return violations

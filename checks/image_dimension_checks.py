@@ -32,6 +32,8 @@ def check_image_rendered_dimensions(doc: ParsedDocument) -> list[Violation]:
     violations = []
 
     for img in doc.images:
+        if img.page_num == 1:
+            continue
         if _is_decorative(img):
             continue
 
@@ -70,6 +72,8 @@ def check_image_pixel_dimensions(doc: ParsedDocument) -> list[Violation]:
     violations = []
 
     for img in doc.images:
+        if img.page_num == 1:
+            continue
         if _is_decorative(img):
             continue
 

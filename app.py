@@ -13,6 +13,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 from checker import run_checks
 from reporter.report_generator import generate_report
+from reporter.pdf_annotator import generate_annotated_pdf
 from utils.constants import Severity, Category
 
 
@@ -117,6 +118,20 @@ if st.button("▶ Run Format Check", type="primary", use_container_width=True):
             use_container_width=True,
         )
 
+    # ── Generate & download annotated PDF ──────────────────────────────────
+    with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as ann_tmp:
+        ann_path = ann_tmp.name
+
+    annotated_path = generate_annotated_pdf(collector, tmp_path, ann_path)
+    with open(annotated_path, "rb") as f:
+        st.download_button(
+            label="⬇ Download Highlighted PDF",
+            data=f.read(),
+            file_name=f"{Path(uploaded.name).stem}_highlighted.pdf",
+            mime="application/pdf",
+            use_container_width=True,
+        )
+
     # ── Per-category accordion ────────────────────────────────────────────────
     st.divider()
     st.subheader("Findings by Category")
@@ -138,7 +153,8 @@ if st.button("▶ Run Format Check", type="primary", use_container_width=True):
                 if v.detail:
                     st.caption(f"↳ {v.detail}")
                 if v.location:
-                    st.caption(f"📍 Near: *{v.location}*")
+                    bg_color = "#ffcccc" if v.severity == Severity.ERROR else "#fff0b3" if v.severity == Severity.WARNING else "#e6f2ff"
+                    st.markdown(f"<span style='font-size: 0.8em; color: gray;'>📍 Near: </span><mark style='background-color: {bg_color}; color: black; padding: 0.1em 0.3em; border-radius: 3px; font-size: 0.9em;'>{v.location}</mark>", unsafe_allow_html=True)
                 st.markdown("---")
 
     # ── Document info ─────────────────────────────────────────────────────────
@@ -153,5 +169,9 @@ if st.button("▶ Run Format Check", type="primary", use_container_width=True):
 # Cleanup
 try:
     os.unlink(tmp_path)
+except Exception:
+    pass
+try:
+    os.unlink(ann_path)
 except Exception:
     pass

@@ -15,7 +15,7 @@ import subprocess
 import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 import fitz          # PyMuPDF
 import pdfplumber
@@ -170,7 +170,7 @@ def _aggregate_lines(plumber_page, page_num: int) -> list[LineInfo]:
     return lines
 
 
-def _dominant(values: list) -> any:
+def _dominant(values: list) -> Any:
     """Return most frequent value in list."""
     if not values:
         return None

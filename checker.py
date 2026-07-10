@@ -39,7 +39,7 @@ CHECKS: list[tuple[str, Callable]] = [
     ("Captions",               run_caption_checks),
     ("Images & Graphs",        run_image_checks),
     ("Equations",              run_equation_checks),
-    ("Chapter Structure",      run_chapter_checks),
+    # ("Chapter Structure",      run_chapter_checks),
     ("Citations & References", run_citation_checks),
     ("Grammar & Spelling",     run_grammar_checks),
     ("Table of Contents",      run_toc_checks),

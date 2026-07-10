@@ -107,6 +107,22 @@ def _is_in_header_footer(line: LineInfo, page_height: float) -> bool:
     return line.top < HEADER_ZONE_PT or line.top > (page_height - FOOTER_ZONE_PT)
 
 
+def _is_centered(line: LineInfo, page_width: float, tolerance: float = 20.0) -> bool:
+    """
+    Check if a line is horizontally centered on the page.
+    Centered text (e.g. CERTIFICATE, title pages) should be skipped
+    since it follows different formatting rules.
+    """
+    line_mid = (line.x0 + line.x1) / 2.0
+    page_mid = page_width / 2.0
+    if abs(line_mid - page_mid) > tolerance:
+        return False
+    # Also verify roughly equal margins on both sides
+    left_margin = line.x0
+    right_margin = page_width - line.x1
+    return abs(left_margin - right_margin) < tolerance * 2
+
+
 # ── Per-line font check ───────────────────────────────────────────────────────
 
 def _check_line_font(line: LineInfo) -> list[Violation]:
@@ -122,6 +138,7 @@ def _check_line_font(line: LineInfo) -> list[Violation]:
             description=f"Wrong font family in {element}",
             detail=f"Found '{line.fontname}', expected Times New Roman",
             location=line.text[:60],
+            bbox=(line.x0, line.top, line.x1, line.bottom),
         ))
 
     # ── Font size check
@@ -142,6 +159,7 @@ def _check_line_font(line: LineInfo) -> list[Violation]:
             description=f"Wrong font size in {element}",
             detail=f"Found {line.size} pt, expected {expected_size} pt",
             location=line.text[:60],
+            bbox=(line.x0, line.top, line.x1, line.bottom),
         ))
 
     # ── Bold check for L1 headings
@@ -152,9 +170,20 @@ def _check_line_font(line: LineInfo) -> list[Violation]:
             page=line.page_num,
             description="Level-1 heading should be bold",
             location=line.text[:60],
+            bbox=(line.x0, line.top, line.x1, line.bottom),
         ))
 
     return violations
+
+
+def _is_code_font(fontname: str) -> bool:
+    if not fontname:
+        return False
+    lower = fontname.lower()
+    return any(sub in lower for sub in [
+        "mono", "courier", "consolas", "typewriter", "teletype", "cmtt", "ectt", "lmtt", "sfmono",
+        "fixed", "code", "ocr", "screen", "lucida console"
+    ])
 
 
 # ── Main entry point ──────────────────────────────────────────────────────────
@@ -176,13 +205,21 @@ def run_font_checks(doc: ParsedDocument) -> list[Violation]:
         if _is_page_number(text):
             continue
 
+        # Skip monospaced / code block fonts
+        if _is_code_font(line.fontname):
+            continue
+
         # Skip header/footer zone lines (they follow different formatting)
         page_idx = line.page_num - 1
         if page_idx < len(doc.page_sizes):
-            _, page_h = doc.page_sizes[page_idx]
+            page_w, page_h = doc.page_sizes[page_idx]
             if _is_in_header_footer(line, page_h):
+                continue
+            # Skip centered text (title pages, certificates, etc.)
+            if _is_centered(line, page_w):
                 continue
 
         violations.extend(_check_line_font(line))
 
     return violations
+

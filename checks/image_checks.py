@@ -86,6 +86,9 @@ def check_image_dpi(doc: ParsedDocument) -> list[Violation]:
     violations = []
 
     for img in doc.images:
+        # Skip cover page images (e.g. logos)
+        if img.page_num == 1:
+            continue
         # Skip tiny/decorative images
         if _is_tiny_image(img):
             continue
@@ -194,6 +197,27 @@ def _has_axis_labels_via_ocr(png_bytes: bytes) -> dict:
     return {"x_axis_ok": x_ok, "y_axis_ok": y_ok, "ocr_text": text[:300]}
 
 
+from utils.constants import FIGURE_CAPTION_PATTERN
+
+def _page_has_graph_caption(doc: ParsedDocument, page_num: int) -> bool:
+    """
+    Check if a page contains a figure caption containing typical chart/plot/graph keywords.
+    """
+    lines = doc.lines_on_page(page_num)
+    graph_keywords = [
+        "graph", "plot", "chart", "accuracy", "loss", "roc", "performance",
+        "comparison", "results", "distribution", "vs", "correlation",
+        "confusion matrix", "precision", "recall", "f1"
+    ]
+    for l in lines:
+        text = l.text.strip()
+        if FIGURE_CAPTION_PATTERN.match(text):
+            text_lower = text.lower()
+            if any(kw in text_lower for kw in graph_keywords):
+                return True
+    return False
+
+
 def check_graph_axes(doc: ParsedDocument) -> list[Violation]:
     """
     For each page containing an image, rasterize and OCR to check for axis labels.
@@ -215,6 +239,14 @@ def check_graph_axes(doc: ParsedDocument) -> list[Violation]:
     pages_with_images = sorted({img.page_num for img in doc.images})
 
     for page_num in pages_with_images:
+        # Skip cover page images
+        if page_num == 1:
+            continue
+
+        # Skip pages that don't have a figure caption matching graph/chart keywords
+        if not _page_has_graph_caption(doc, page_num):
+            continue
+
         png_bytes = _rasterize_page(doc.path, page_num)
         if png_bytes is None:
             continue

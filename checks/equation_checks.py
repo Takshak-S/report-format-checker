@@ -65,6 +65,7 @@ def run_equation_checks(doc: ParsedDocument) -> list[Violation]:
                 description="Equation numbering is not sequential",
                 detail=f"Expected ({ch}.{expected}), found ({ch}.{eq_num})",
                 location=line.text[:60],
+                bbox=(line.x0, line.top, line.x1, line.bottom),
             ))
         counters[ch] = eq_num
 
@@ -79,6 +80,7 @@ def run_equation_checks(doc: ParsedDocument) -> list[Violation]:
                     description="Equation number may not be right-aligned",
                     detail=f"Line right edge at {line.x1:.1f} pt, expected near {page_width - MARGIN_RIGHT_PT:.1f} pt",
                     location=line.text[:60],
+                    bbox=(line.x0, line.top, line.x1, line.bottom),
                 ))
 
     return violations

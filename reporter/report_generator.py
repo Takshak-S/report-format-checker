@@ -12,11 +12,11 @@ from datetime import datetime
 
 import openpyxl
 from openpyxl.styles import (
-    PatternFill, Font, Alignment, Border, Side, numbers
+    PatternFill, Font, Alignment, Border, Side
 )
 from openpyxl.utils import get_column_letter
 
-from utils.error_model import ViolationCollector, Violation
+from utils.error_model import ViolationCollector
 from utils.constants import Severity
 
 

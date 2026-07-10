@@ -70,7 +70,7 @@ def check_toc_exists(doc: ParsedDocument) -> list[Violation]:
 
 def check_toc_format(doc: ParsedDocument) -> list[Violation]:
     """Validate TOC entry formatting on detected TOC pages."""
-    violations = []
+    violations: list[Violation] = []
     toc_pages = _find_toc_pages(doc)
 
     if not toc_pages:
@@ -97,7 +97,14 @@ def check_toc_format(doc: ParsedDocument) -> list[Violation]:
         for line in entry_lines[:30]:
             if TOC_ENTRY_PATTERN.match(line):
                 continue
+            # Allow lines ending in dot leaders (which get wrapped in extraction)
+            if re.search(r"\.\s*\.\s*\.\s*$", line):
+                continue
+            # Allow standard page numbers (digits)
             if re.search(r"\d+\s*$", line) and len(line) > 10:
+                continue
+            # Allow Roman numeral page numbers
+            if re.search(r"\b[ivxlcdmIVXLCDM]+\s*$", line) and len(line) > 10:
                 continue
             if line.isdigit() or len(line) < 8:
                 continue

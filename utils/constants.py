@@ -3,6 +3,8 @@ Format specification constants derived from Standardization_Template_25_05_2206.
 All measurements in PDF points (1 pt = 1/72 inch) unless noted.
 """
 
+import re
+
 # ── Page Layout ────────────────────────────────────────────────────────────────
 PAGE_WIDTH_PT  = 595.28   # A4 width  (210 mm)
 PAGE_HEIGHT_PT = 841.89   # A4 height (297 mm)
@@ -36,7 +38,7 @@ FONT_SIZE_BODY       = 12.0
 FONT_SIZE_HEADING_L1 = 14.0
 FONT_SIZE_HEADING_L0 = 16.0
 FONT_SIZE_CAPTION    = 10.0
-FONT_SIZE_TOLERANCE  = 1.5   # ±1.5 pt tolerance — handles real-world PDF rendering (e.g., 17.2pt ≈ 16pt)
+FONT_SIZE_TOLERANCE  = 3.0   # ±3 pt tolerance — handles real-world PDF rendering variance
 
 # ── Spacing & Alignment ────────────────────────────────────────────────────────
 LINE_SPACING_FACTOR  = 1.5   # 1.5× line spacing
@@ -51,7 +53,6 @@ HEADER_ZONE_PT = 45.0   # content within this distance from top is header/footer
 FOOTER_ZONE_PT = 45.0   # content within this distance from bottom is header/footer
 
 # ── Heading Patterns ──────────────────────────────────────────────────────────
-import re
 
 # Level 0: UPPERCASE chapter title  e.g. "INTRODUCTION", "CHAPTER 1 INTRODUCTION", "CHAPTER1"
 HEADING_L0_PATTERN = re.compile(r"^(?:CHAPTER\s*\d+[\s.:–-]*)?[A-Z][A-Z\s\-&/,\d]+$")
@@ -131,16 +132,16 @@ class Category:
 
 # ── Table of Contents ──────────────────────────────────────────────────────────
 TOC_HEADER_PATTERN = re.compile(
-    r"^(table\s+of\s+contents|contents|list\s+of\s+figures|list\s+of\s+tables)\s*$",
+    r"^(table\s+of\s+contents|contents)\s*$",
     re.IGNORECASE | re.MULTILINE,
 )
 TOC_ENTRY_PATTERN = re.compile(
-    r"^(.+?)\s+(?:\.{2,}\s*|\s+)\d+\s*$"
+    r"^(.+?)\s+(?:\.{2,}\s*|\s+)(?:\d+|[ivxlcdmIVXLCDM]+)\s*$"
 )
 
 # ── Subtopic structure ─────────────────────────────────────────────────────────
-MIN_LINES_FOR_SUBTOPICS = 25          # body lines between L1 headings before subtopics expected
-MIN_WORDS_FOR_SUBTOPICS = 300
+MIN_LINES_FOR_SUBTOPICS = 40          # body lines between L1 headings before subtopics expected
+MIN_WORDS_FOR_SUBTOPICS = 500
 
 # ── Image dimensions ───────────────────────────────────────────────────────────
 MIN_IMAGE_RENDERED_PT = 72.0          # min 1 inch rendered width/height for significant images

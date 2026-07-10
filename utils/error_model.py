@@ -1,7 +1,7 @@
 """
 Structured violation / finding model used across all checks.
 """
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Optional
 from utils.constants import Severity
 
@@ -15,6 +15,8 @@ class Violation:
     description: str                    # Human-readable description
     detail:      Optional[str] = None   # Extra context (e.g. found value vs expected)
     location:    Optional[str] = None   # Section/heading name if known
+    bbox:        Optional[tuple[float, float, float, float]] = None
+    # (x0, y0, x1, y1) bounding box in PDF points for precise highlighting
 
     def to_dict(self) -> dict:
         return {
@@ -65,6 +67,13 @@ class ViolationCollector:
         result: dict[str, list[Violation]] = {}
         for v in self._violations:
             result.setdefault(v.category, []).append(v)
+        return result
+
+    def by_page(self) -> dict[int, list[Violation]]:
+        """Group violations by page number for efficient per-page processing."""
+        result: dict[int, list[Violation]] = {}
+        for v in self._violations:
+            result.setdefault(v.page, []).append(v)
         return result
 
     def summary(self) -> dict:

@@ -50,9 +50,9 @@ APA_GENERAL = re.compile(
 YEAR_PATTERN    = re.compile(r"\b(19|20)\d{2}\b")
 AUTHOR_PATTERN  = re.compile(r"[A-Z][a-z]+")
 
-# Detect bibliography section header
+# Detect bibliography section header (supports optional numbering like '9. REFERENCES')
 BIB_SECTION_HEADERS = re.compile(
-    r"^(references|bibliography|works cited|reference list)\s*$",
+    r"^(?:\d+\.)?\s*(references|bibliography|works cited|reference list)\s*$",
     re.IGNORECASE | re.MULTILINE,
 )
 

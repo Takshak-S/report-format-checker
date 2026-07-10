@@ -123,6 +123,7 @@ def check_heading_numbering(headings: list[DetectedHeading]) -> list[Violation]:
                     page=h.page_num,
                     description=f"Heading numbering gap or repeat at level 1",
                     detail=f"Expected {ch}.{prev_sec + 1}, found '{text[:50]}'",
+                    bbox=(h.line.x0, h.line.top, h.line.x1, h.line.bottom),
                 ))
             last_l1_per_chapter[ch] = sec
 
@@ -140,6 +141,7 @@ def check_heading_numbering(headings: list[DetectedHeading]) -> list[Violation]:
                     page=h.page_num,
                     description=f"Heading numbering gap or repeat at level 2",
                     detail=f"Expected {ch}.{sec}.{prev_subsec + 1}, found '{text[:50]}'",
+                    bbox=(h.line.x0, h.line.top, h.line.x1, h.line.bottom),
                 ))
             last_l2_per_section[key] = subsec
 
@@ -164,6 +166,7 @@ def check_heading_case(headings: list[DetectedHeading]) -> list[Violation]:
                     page=h.page_num,
                     description="Chapter title (L0) must be UPPERCASE",
                     location=text[:60],
+                    bbox=(h.line.x0, h.line.top, h.line.x1, h.line.bottom),
                 ))
 
         elif h.level == 1:
@@ -178,6 +181,7 @@ def check_heading_case(headings: list[DetectedHeading]) -> list[Violation]:
                         page=h.page_num,
                         description="Level-1 heading must be UPPERCASE after decimal",
                         location=text[:60],
+                        bbox=(h.line.x0, h.line.top, h.line.x1, h.line.bottom),
                     ))
 
         elif h.level == 2:
@@ -218,6 +222,8 @@ def check_chapter_new_page(headings: list[DetectedHeading], doc: ParsedDocument)
     l0_headings = [h for h in headings if h.level == 0]
 
     for h in l0_headings:
+        if h.page_num == 1:
+            continue
         page_lines = doc.lines_on_page(h.page_num)
         page_h = doc.page_sizes[h.page_num - 1][1] if h.page_num <= len(doc.page_sizes) else 841.89
 
@@ -239,6 +245,7 @@ def check_chapter_new_page(headings: list[DetectedHeading], doc: ParsedDocument)
                 description="Chapter title (L0) should start on a new page",
                 detail=f"Found {len(significant_above)} content lines above it on page {h.page_num}",
                 location=h.text[:60],
+                bbox=(h.line.x0, h.line.top, h.line.x1, h.line.bottom),
             ))
 
     return violations
