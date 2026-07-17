@@ -65,6 +65,14 @@ with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp:
 
 st.success(f"Loaded: **{uploaded.name}** ({uploaded.size / 1024:.1f} KB)")
 
+if "uploaded_filename" not in st.session_state or st.session_state.uploaded_filename != uploaded.name:
+    st.session_state.uploaded_filename = uploaded.name
+    st.session_state.check_results = None
+    st.session_state.doc = None
+    st.session_state.excel_report = None
+    st.session_state.pdf_report = None
+    st.session_state.annotated_pdf = None
+
 if st.button("▶ Run Format Check", type="primary", use_container_width=True):
     progress_bar  = st.progress(0, text="Starting…")
     status_text   = st.empty()
@@ -81,6 +89,32 @@ if st.button("▶ Run Format Check", type="primary", use_container_width=True):
                 progress_callback=update_progress,
                 skip_grammar=skip_grammar,
             )
+            
+            # Generate reports during the check phase so we don't re-run them on every UI interaction
+            with tempfile.NamedTemporaryFile(suffix=".xlsx", delete=False) as out_tmp:
+                out_path = out_tmp.name
+            report_path = generate_report(collector, uploaded.name, out_path)
+            with open(report_path, "rb") as f:
+                st.session_state.excel_report = f.read()
+            os.unlink(report_path)
+
+            with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as out_pdf_tmp:
+                out_pdf_path = out_pdf_tmp.name
+            pdf_report_path = generate_pdf_report(collector, uploaded.name, out_pdf_path)
+            with open(pdf_report_path, "rb") as f:
+                st.session_state.pdf_report = f.read()
+            os.unlink(pdf_report_path)
+
+            with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as ann_tmp:
+                ann_path = ann_tmp.name
+            annotated_path = generate_annotated_pdf(collector, tmp_path, ann_path)
+            with open(annotated_path, "rb") as f:
+                st.session_state.annotated_pdf = f.read()
+            os.unlink(annotated_path)
+
+            st.session_state.check_results = collector
+            st.session_state.doc = doc
+
         except FileNotFoundError as e:
             st.error(str(e))
             st.stop()
@@ -90,6 +124,10 @@ if st.button("▶ Run Format Check", type="primary", use_container_width=True):
 
     progress_bar.progress(100, text="Complete ✓")
     status_text.empty()
+
+if st.session_state.check_results is not None:
+    collector = st.session_state.check_results
+    doc = st.session_state.doc
 
     summary = collector.summary()
 
@@ -105,47 +143,38 @@ if st.button("▶ Run Format Check", type="primary", use_container_width=True):
     color   = "success" if summary["errors"] == 0 else "error"
     getattr(st, color)(f"**Overall Status: {overall}**")
 
-    # ── Generate & download report ────────────────────────────────────────────
-    with tempfile.NamedTemporaryFile(suffix=".xlsx", delete=False) as out_tmp:
-        out_path = out_tmp.name
-
-    report_path = generate_report(collector, uploaded.name, out_path)
-    with open(report_path, "rb") as f:
-        st.download_button(
-            label="⬇ Download Excel Report",
-            data=f.read(),
-            file_name=f"{Path(uploaded.name).stem}_format_report.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            use_container_width=True,
-        )
-
-    # ── Generate & download PDF summary report ────────────────────────────────
-    with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as out_pdf_tmp:
-        out_pdf_path = out_pdf_tmp.name
-
-    pdf_report_path = generate_pdf_report(collector, uploaded.name, out_pdf_path)
-    with open(pdf_report_path, "rb") as f:
-        st.download_button(
-            label="⬇ Download PDF Summary Report",
-            data=f.read(),
-            file_name=f"{Path(uploaded.name).stem}_format_report.pdf",
-            mime="application/pdf",
-            use_container_width=True,
-        )
-
-    # ── Generate & download annotated PDF ──────────────────────────────────
-    with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as ann_tmp:
-        ann_path = ann_tmp.name
-
-    annotated_path = generate_annotated_pdf(collector, tmp_path, ann_path)
-    with open(annotated_path, "rb") as f:
-        st.download_button(
-            label="⬇ Download Highlighted PDF",
-            data=f.read(),
-            file_name=f"{Path(uploaded.name).stem}_highlighted.pdf",
-            mime="application/pdf",
-            use_container_width=True,
-        )
+    # ── Download buttons ──────────────────────────────────────────────────────
+    col_dl1, col_dl2, col_dl3 = st.columns(3)
+    
+    with col_dl1:
+        if st.session_state.excel_report:
+            st.download_button(
+                label="⬇ Download Excel Report",
+                data=st.session_state.excel_report,
+                file_name=f"{Path(uploaded.name).stem}_format_report.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                use_container_width=True,
+            )
+            
+    with col_dl2:
+        if st.session_state.pdf_report:
+            st.download_button(
+                label="⬇ Download PDF Summary",
+                data=st.session_state.pdf_report,
+                file_name=f"{Path(uploaded.name).stem}_format_report.pdf",
+                mime="application/pdf",
+                use_container_width=True,
+            )
+            
+    with col_dl3:
+        if st.session_state.annotated_pdf:
+            st.download_button(
+                label="⬇ Download Highlighted PDF",
+                data=st.session_state.annotated_pdf,
+                file_name=f"{Path(uploaded.name).stem}_highlighted.pdf",
+                mime="application/pdf",
+                use_container_width=True,
+            )
 
     # ── Per-category accordion ────────────────────────────────────────────────
     st.divider()
@@ -183,10 +212,7 @@ if st.button("▶ Run Format Check", type="primary", use_container_width=True):
 
 # Cleanup
 try:
-    os.unlink(tmp_path)
-except Exception:
-    pass
-try:
-    os.unlink(ann_path)
+    if 'tmp_path' in locals():
+        os.unlink(tmp_path)
 except Exception:
     pass

@@ -1,0 +1,87 @@
+[
+  {
+    "id": "M000",
+    "page": 2,
+    "rule": "Right margin overflow in BODY_TEXT.",
+    "bbox": [
+      138.618,
+      134.88621119999993,
+      534.8013728000002,
+      146.84141119999992
+    ],
+    "dom_id": "para_223",
+    "confidence": 0.7772998611746912,
+    "expected": "<= 523.276pt",
+    "detected": "534.8pt",
+    "reason": "Single line overflow.",
+    "image": "debug/M000_p2.png"
+  },
+  {
+    "id": "M001",
+    "page": 3,
+    "rule": "Right margin overflow in BODY_TEXT.",
+    "bbox": [
+      108.0,
+      156.55521119999992,
+      539.7022720000002,
+      168.5104111999999
+    ],
+    "dom_id": "para_406",
+    "confidence": 0.7772998611746912,
+    "expected": "<= 523.276pt",
+    "detected": "539.7pt",
+    "reason": "Single line overflow.",
+    "image": "debug/M001_p3.png"
+  },
+  {
+    "id": "M002",
+    "page": 40,
+    "rule": "Right margin overflow in BODY_TEXT.",
+    "bbox": [
+      125.55227795000003,
+      608.56865041584,
+      544.4129924186241,
+      621.08637067056
+    ],
+    "dom_id": null,
+    "confidence": 0.7772998611746912,
+    "expected": "<= 523.276pt",
+    "detected": "544.41pt",
+    "reason": "Single line overflow.",
+    "image": "debug/M002_p40.png"
+  },
+  {
+    "id": "M003",
+    "page": 41,
+    "rule": "Right margin overflow in BODY_TEXT.",
+    "bbox": [
+      107.99239999999998,
+      644.64334846056,
+      536.9305562355199,
+      656.59914622056
+    ],
+    "dom_id": "para_13611",
+    "confidence": 0.7772998611746912,
+    "expected": "<= 523.276pt",
+    "detected": "536.93pt",
+    "reason": "Single line overflow.",
+    "image": "debug/M003_p41.png"
+  },
+  {
+    "id": "M004",
+    "page": 51,
+    "rule": "Right margin overflow in BODY_TEXT.",
+    "bbox": [
+      107.99240000000017,
+      652.7980681761599,
+      535.1371865715204,
+      664.7538659361599
+    ],
+    "dom_id": "para_17417",
+    "confidence": 0.7772998611746912,
+    "expected": "<= 523.276pt",
+    "detected": "535.14pt",
+    "reason": "Single line overflow.",
+    "image": "debug/M004_p51.png"
+  }
+]

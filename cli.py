@@ -99,12 +99,13 @@ def main():
     print(_bold("RESULTS SUMMARY"))
     print(_bold("─" * 60))
     print(f"  Total issues : {summary['total']}")
-    print(f"  {_red('Errors')}   : {summary['errors']}")
-    print(f"  {_yellow('Warnings')} : {summary['warnings']}")
-    print(f"  {_cyan('Info')}     : {summary['info']}")
+    print(f"  {_red('Critical')} : {summary['critical']}")
+    print(f"  {_yellow('Major')}    : {summary['major']}")
+    print(f"  {_yellow('Minor')}    : {summary['minor']}")
+    print(f"  {_cyan('Warnings')} : {summary['warnings']}")
     print()
 
-    overall = _green("✓ PASS") if summary["errors"] == 0 else _red("✗ FAIL")
+    overall = _green("✓ PASS") if summary["critical"] == 0 else _red("✗ FAIL")
     print(f"  Overall: {_bold(overall)}")
     print(_bold("─" * 60))
 
@@ -116,9 +117,11 @@ def main():
         print()
 
         severity_fmt = {
-            Severity.ERROR:   _red,
-            Severity.WARNING: _yellow,
-            Severity.INFO:    _cyan,
+            Severity.CRITICAL: _red,
+            Severity.MAJOR:    _yellow,
+            Severity.MINOR:    _yellow,
+            Severity.WARNING:  _cyan,
+            Severity.INFO:     _cyan,
         }
 
         for cat in sorted(by_cat.keys()):
@@ -135,8 +138,9 @@ def main():
 
     # ── Generate Excel and PDF reports ────────────────────────────────────────
     if not args.no_report:
-        report_path = generate_report(collector, str(pdf_path), args.output)
-        pdf_report_out = str(Path(args.output).with_suffix('.pdf'))
+        out_base = args.output if args.output else str(pdf_path.with_suffix('.xlsx'))
+        report_path = generate_report(collector, str(pdf_path), out_base)
+        pdf_report_out = str(pdf_path.with_name(f"{pdf_path.stem}_report.pdf"))
         pdf_report_path = generate_pdf_report(collector, str(pdf_path), pdf_report_out)
         print(f"  {_green('✓')} Excel Report saved: {report_path}")
         print(f"  {_green('✓')} PDF Report saved: {pdf_report_path}")
@@ -149,7 +153,7 @@ def main():
         )
         print(f"  {_green('✓')} Highlighted PDF saved: {annotated_path}")
 
-    sys.exit(0 if summary["errors"] == 0 else 1)
+    sys.exit(0 if summary["critical"] == 0 else 1)
 
 
 if __name__ == "__main__":

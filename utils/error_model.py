@@ -1,29 +1,42 @@
 """
 Structured violation / finding model used across all checks.
 """
-from dataclasses import dataclass
-from typing import Optional
+from dataclasses import dataclass, field
+from typing import Optional, List
 from utils.constants import Severity
 
 
 @dataclass
 class Violation:
-    """Represents a single format violation found in the PDF."""
+    """Represents a single format violation found in the PDF with full explainability."""
     category:    str                    # Category constant (e.g. Category.FONT)
-    severity:    str                    # Severity constant (ERROR / WARNING / INFO)
+    severity:    str                    # Severity constant (CRITICAL / MAJOR / MINOR / WARNING / SUGGESTION / INFO)
     page:        int                    # 1-based page number  (-1 = document-level)
-    description: str                    # Human-readable description
-    detail:      Optional[str] = None   # Extra context (e.g. found value vs expected)
+    description: str                    # Human-readable description (Rule)
+    detail:      Optional[str] = None   # Expected vs Detected (e.g. Expected <= 523pt, found 534pt)
+    
+    # Explainability Fields
+    expected:    Optional[str] = None
+    detected:    Optional[str] = None
+    confidence:  float = 0.0
+    signals:     List[str] = field(default_factory=list)
+    reason:      Optional[str] = None
+    suggested_fix: Optional[str] = None
+    
     location:    Optional[str] = None   # Section/heading name if known
-    bbox:        Optional[tuple[float, float, float, float]] = None
-    # (x0, y0, x1, y1) bounding box in PDF points for precise highlighting
+    bbox:        Optional[tuple[float, float, float, float]] = None # (x0, y0, x1, y1) bounding box
 
     def to_dict(self) -> dict:
         return {
             "Category":    self.category,
             "Severity":    self.severity,
             "Page":        self.page if self.page > 0 else "Doc",
-            "Description": self.description,
+            "Rule":        self.description,
+            "Expected":    self.expected or "",
+            "Detected":    self.detected or "",
+            "Confidence":  round(self.confidence, 4) if self.confidence else 0.0,
+            "Reason":      self.reason or "",
+            "SuggestedFix": self.suggested_fix or "",
             "Detail":      self.detail or "",
             "Location":    self.location or "",
         }
@@ -52,12 +65,24 @@ class ViolationCollector:
         return list(self._violations)
 
     @property
-    def errors(self) -> list[Violation]:
-        return [v for v in self._violations if v.severity == Severity.ERROR]
+    def critical(self) -> list[Violation]:
+        return [v for v in self._violations if v.severity == Severity.CRITICAL]
 
+    @property
+    def major(self) -> list[Violation]:
+        return [v for v in self._violations if v.severity == Severity.MAJOR]
+        
+    @property
+    def minor(self) -> list[Violation]:
+        return [v for v in self._violations if v.severity == Severity.MINOR]
+        
     @property
     def warnings(self) -> list[Violation]:
         return [v for v in self._violations if v.severity == Severity.WARNING]
+        
+    @property
+    def suggestions(self) -> list[Violation]:
+        return [v for v in self._violations if v.severity == Severity.SUGGESTION]
 
     @property
     def info(self) -> list[Violation]:
@@ -78,8 +103,11 @@ class ViolationCollector:
 
     def summary(self) -> dict:
         return {
-            "total":    len(self._violations),
-            "errors":   len(self.errors),
-            "warnings": len(self.warnings),
-            "info":     len(self.info),
+            "total":       len(self._violations),
+            "critical":    len(self.critical),
+            "major":       len(self.major),
+            "minor":       len(self.minor),
+            "warnings":    len(self.warnings),
+            "suggestions": len(self.suggestions),
+            "info":        len(self.info),
         }

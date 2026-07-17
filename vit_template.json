@@ -1,0 +1,71 @@
+{
+  "page": {
+    "format": "A4"
+  },
+  "margins": {
+    "left_inches": 1.5,
+    "right_inches": 1.0,
+    "top_inches": 1.0,
+    "bottom_inches": 1.0
+  },
+  "typography": {
+    "allowed_fonts": ["Times New Roman", "TimesNewRomanPSMT", "Nimbus Roman", "TeX Gyre Termes"],
+    "body_size": 12.0,
+    "caption_size": 10.0
+  },
+  "paragraph": {
+    "line_spacing": 1.5,
+    "alignment": "justified"
+  },
+  "page_number": {
+    "alignment": "center",
+    "position": "bottom"
+  },
+  "headings": {
+    "level_0": {
+      "name": "Chapter",
+      "size": 16.0,
+      "case": "uppercase",
+      "new_page": true,
+      "bold": true
+    },
+    "level_1": {
+      "size": 14.0,
+      "case": "uppercase",
+      "bold": true,
+      "numbering": "decimal"
+    },
+    "level_2": {
+      "size": 12.0,
+      "case": "title",
+      "bold": true,
+      "numbering": "two_decimal"
+    },
+    "level_3": {
+      "size": 12.0,
+      "bold": true,
+      "italic": true
+    }
+  },
+  "figures": {
+    "caption_position": "below",
+    "numbering": "chapter_wise"
+  },
+  "tables": {
+    "caption_position": "above",
+    "numbering": "chapter_wise"
+  },
+  "images": {
+    "min_dpi": 600
+  },
+  "equations": {
+    "numbering": "chapter_wise"
+  },
+  "bibliography": {
+    "style": "APA"
+  },
+  "grammar": {
+    "engine": "LanguageTool",
+    "dictionary": "CS"
+  }
+}

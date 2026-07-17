@@ -111,21 +111,28 @@ def generate_pdf_report(
         
         # Sort violations: ERROR -> WARNING -> INFO
         def sev_order(v):
-            if v.severity == Severity.ERROR: return 0
-            if v.severity == Severity.WARNING: return 1
-            return 2
+            if v.severity == Severity.CRITICAL: return 0
+            if v.severity == Severity.MAJOR: return 1
+            if v.severity == Severity.MINOR: return 2
+            if v.severity == Severity.WARNING: return 3
+            if v.severity == Severity.SUGGESTION: return 4
+            return 5
             
         sorted_viols = sorted(violations, key=sev_order)
         
         for v in sorted_viols:
             # Severity Label
             pdf.set_font("helvetica", "B", 10)
-            if v.severity == Severity.ERROR:
-                pdf.set_text_color(*COLOR_ERROR)
+            if v.severity == Severity.CRITICAL:
+                pdf.set_text_color(204, 0, 0)
+            elif v.severity == Severity.MAJOR:
+                pdf.set_text_color(204, 102, 0)
+            elif v.severity == Severity.MINOR:
+                pdf.set_text_color(204, 153, 0)
             elif v.severity == Severity.WARNING:
-                pdf.set_text_color(200, 150, 0)
+                pdf.set_text_color(204, 204, 0)
             else:
-                pdf.set_text_color(*COLOR_INFO)
+                pdf.set_text_color(76, 76, 76)
                 
             pdf.cell(25, 6, f"[{v.severity}]", ln=False)
             

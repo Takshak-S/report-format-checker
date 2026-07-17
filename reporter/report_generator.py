@@ -30,8 +30,11 @@ COLOR_SUBHEADER = "D9E1F2"
 COLOR_PASS    = "C6EFCE"  # light green
 
 SEVERITY_COLORS = {
-    Severity.ERROR:   COLOR_ERROR,
+    Severity.CRITICAL: COLOR_ERROR,
+    Severity.MAJOR:   COLOR_WARNING,
+    Severity.MINOR:   COLOR_WARNING,
     Severity.WARNING: COLOR_WARNING,
+    Severity.SUGGESTION: COLOR_INFO,
     Severity.INFO:    COLOR_INFO,
 }
 
@@ -101,9 +104,12 @@ def _build_summary_sheet(wb: openpyxl.Workbook, collector: ViolationCollector, p
     row = 4
     for label, key, color in [
         ("Total Issues", "total", "E2EFDA"),
-        ("Errors",       "errors",   COLOR_ERROR),
-        ("Warnings",     "warnings", COLOR_WARNING),
-        ("Info",         "info",     COLOR_INFO),
+        ("Critical", "critical", COLOR_ERROR),
+        ("Major", "major", COLOR_WARNING),
+        ("Minor", "minor", COLOR_WARNING),
+        ("Warnings", "warnings", COLOR_WARNING),
+        ("Suggestions", "suggestions", COLOR_INFO),
+        ("Info", "info", COLOR_INFO),
     ]:
         ws.merge_cells(f"A{row}:C{row}")
         _data_cell(ws, row, 1, label, bg="F2F2F2", bold=True)
@@ -126,9 +132,9 @@ def _build_summary_sheet(wb: openpyxl.Workbook, collector: ViolationCollector, p
 
     for cat in all_categories:
         viols = by_cat[cat]
-        errors   = sum(1 for v in viols if v.severity == Severity.ERROR)
-        warnings = sum(1 for v in viols if v.severity == Severity.WARNING)
-        infos    = sum(1 for v in viols if v.severity == Severity.INFO)
+        errors   = sum(1 for v in viols if v.severity in (Severity.CRITICAL, Severity.MAJOR))
+        warnings = sum(1 for v in viols if v.severity in (Severity.MINOR, Severity.WARNING))
+        info     = sum(1 for v in viols if v.severity in (Severity.SUGGESTION, Severity.INFO))
         total    = len(viols)
         status   = "✗ FAIL" if errors > 0 else ("⚠ WARN" if warnings > 0 else "✓ PASS")
         status_color = COLOR_ERROR if errors else (COLOR_WARNING if warnings else COLOR_PASS)
@@ -136,7 +142,7 @@ def _build_summary_sheet(wb: openpyxl.Workbook, collector: ViolationCollector, p
         _data_cell(ws, row, 1, cat, bold=True)
         _data_cell(ws, row, 2, errors,   bg=COLOR_ERROR   if errors   else None, align="center")
         _data_cell(ws, row, 3, warnings, bg=COLOR_WARNING if warnings else None, align="center")
-        _data_cell(ws, row, 4, infos,    bg=COLOR_INFO    if infos    else None, align="center")
+        _data_cell(ws, row, 4, info,     bg=COLOR_INFO    if info     else None, align="center")
         _data_cell(ws, row, 5, total, bold=True, align="center")
         _data_cell(ws, row, 6, status, bg=status_color, bold=True, align="center")
         row += 1
@@ -163,7 +169,14 @@ def _build_violations_sheet(wb: openpyxl.Workbook, collector: ViolationCollector
     ws.freeze_panes = "A2"
 
     # Sort: errors first, then warnings, then info; within each, by page
-    severity_order = {Severity.ERROR: 0, Severity.WARNING: 1, Severity.INFO: 2}
+    severity_order = {
+        Severity.CRITICAL: 0, 
+        Severity.MAJOR: 1, 
+        Severity.MINOR: 2,
+        Severity.WARNING: 3,
+        Severity.SUGGESTION: 4,
+        Severity.INFO: 5
+    }
     sorted_viols = sorted(
         collector.all,
         key=lambda v: (severity_order.get(v.severity, 3), v.page if v.page > 0 else 0),

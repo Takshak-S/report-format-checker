@@ -101,11 +101,13 @@ MANDATORY_CHAPTERS = [
     "Conclusion and Future Enhancements",
 ]
 
-# ── Severity Levels ────────────────────────────────────────────────────────────
 class Severity:
-    ERROR   = "ERROR"    # Must fix — structural/critical
-    WARNING = "WARNING"  # Should fix — style/formatting
-    INFO    = "INFO"     # FYI — minor suggestion
+    CRITICAL   = "CRITICAL"    # Core structural failures (Margins, wrong font family, page size)
+    MAJOR      = "MAJOR"       # Important formatting issues (Heading size, missing captions)
+    MINOR      = "MINOR"       # Small overflows, spacing issues
+    WARNING    = "WARNING"     # Should fix, edge cases (Long URLs overflowing)
+    SUGGESTION = "SUGGESTION"  # Grammar, recommendations
+    INFO       = "INFO"        # FYI — minor suggestion
 
 # ── Check Category Labels ──────────────────────────────────────────────────────
 class Category:
