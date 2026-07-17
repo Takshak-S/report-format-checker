@@ -119,7 +119,7 @@ def run_chapter_checks(doc: ParsedDocument) -> list[Violation]:
         # Not found anywhere
         violations.append(Violation(
             category=Category.CHAPTERS,
-            severity=Severity.ERROR,
+            severity=Severity.CRITICAL,
             page=-1,
             description=f"Mandatory chapter missing: '{chapter}'",
             detail="Not found in document headings or table of contents",
@@ -134,7 +134,7 @@ def run_chapter_checks(doc: ParsedDocument) -> list[Violation]:
                 c_prev = found_chapters[i - 1][0]
                 violations.append(Violation(
                     category=Category.CHAPTERS,
-                    severity=Severity.ERROR,
+                    severity=Severity.CRITICAL,
                     page=pages[i],
                     description="Mandatory chapters are out of order",
                     detail=f"'{c_curr}' (p.{pages[i]}) appears before '{c_prev}' (p.{pages[i-1]})",

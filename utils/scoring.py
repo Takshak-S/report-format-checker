@@ -36,7 +36,7 @@ def compute_score(collector: ViolationCollector) -> tuple[int, str]:
             continue
 
         weight = CATEGORY_WEIGHTS.get(v.category, 1.0)
-        if v.severity == Severity.ERROR:
+        if v.severity == Severity.CRITICAL:
             penalty += ERROR_PENALTY * weight
         elif v.severity == Severity.WARNING:
             penalty += WARNING_PENALTY * weight

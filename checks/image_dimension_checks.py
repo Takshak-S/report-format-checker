@@ -80,7 +80,7 @@ def check_image_pixel_dimensions(doc: ParsedDocument) -> list[Violation]:
         if img.width_px < MIN_IMAGE_PIXELS or img.height_px < MIN_IMAGE_PIXELS:
             violations.append(Violation(
                 category=Category.IMAGE_DIMS,
-                severity=Severity.ERROR,
+                severity=Severity.CRITICAL,
                 page=img.page_num,
                 description="Image pixel dimensions below minimum quality threshold",
                 detail=f"Found {img.width_px}×{img.height_px} px (min {MIN_IMAGE_PIXELS} px per side)",

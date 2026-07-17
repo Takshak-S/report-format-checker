@@ -135,12 +135,12 @@ if st.session_state.check_results is not None:
     st.divider()
     col1, col2, col3, col4 = st.columns(4)
     col1.metric("Total Issues", summary["total"])
-    col2.metric("🔴 Errors",    summary["errors"])
+    col2.metric("🔴 Critical",  summary["critical"])
     col3.metric("🟡 Warnings",  summary["warnings"])
     col4.metric("🔵 Info",      summary["info"])
 
-    overall = "✅ PASS" if summary["errors"] == 0 else "❌ FAIL"
-    color   = "success" if summary["errors"] == 0 else "error"
+    overall = "✅ PASS" if summary["critical"] == 0 else "❌ FAIL"
+    color   = "success" if summary["critical"] == 0 else "error"
     getattr(st, color)(f"**Overall Status: {overall}**")
 
     # ── Download buttons ──────────────────────────────────────────────────────
@@ -181,15 +181,34 @@ if st.session_state.check_results is not None:
     st.subheader("Findings by Category")
 
     by_cat = collector.by_category()
-    severity_icon = {Severity.ERROR: "🔴", Severity.WARNING: "🟡", Severity.INFO: "🔵"}
+    severity_icon = {
+        Severity.CRITICAL: "🔴", 
+        Severity.MAJOR: "🟠", 
+        Severity.MINOR: "🟡", 
+        Severity.WARNING: "🟡", 
+        Severity.SUGGESTION: "🔵",
+        Severity.INFO: "🔵"
+    }
 
     for cat in sorted(by_cat.keys()):
         viols = by_cat[cat]
-        errors   = sum(1 for v in viols if v.severity == Severity.ERROR)
+        critical = sum(1 for v in viols if v.severity == Severity.CRITICAL)
+        major = sum(1 for v in viols if v.severity == Severity.MAJOR)
+        minor = sum(1 for v in viols if v.severity == Severity.MINOR)
         warnings = sum(1 for v in viols if v.severity == Severity.WARNING)
-        badge    = f"🔴 {errors} error(s)" if errors else (f"🟡 {len(viols)} warning(s)" if warnings else f"🔵 {len(viols)} info")
+        
+        if critical > 0:
+            badge = f"🔴 {critical} critical"
+        elif major > 0:
+            badge = f"🟠 {major} major"
+        elif minor > 0:
+            badge = f"🟡 {minor} minor"
+        elif warnings > 0:
+            badge = f"🟡 {warnings} warning(s)"
+        else:
+            badge = f"🔵 {len(viols)} info"
 
-        with st.expander(f"**{cat}** — {badge}", expanded=(errors > 0)):
+        with st.expander(f"**{cat}** — {badge}", expanded=(critical > 0 or major > 0)):
             for v in sorted(viols, key=lambda x: (x.page if x.page > 0 else 9999)):
                 icon = severity_icon.get(v.severity, "⚪")
                 page_label = f"p.{v.page}" if v.page > 0 else "doc-level"
@@ -197,18 +216,18 @@ if st.session_state.check_results is not None:
                 if v.detail:
                     st.caption(f"↳ {v.detail}")
                 if v.location:
-                    bg_color = "#ffcccc" if v.severity == Severity.ERROR else "#fff0b3" if v.severity == Severity.WARNING else "#e6f2ff"
+                    bg_color = "#ffcccc" if v.severity in (Severity.CRITICAL, Severity.MAJOR) else "#fff0b3" if v.severity in (Severity.MINOR, Severity.WARNING) else "#e6f2ff"
                     st.markdown(f"<span style='font-size: 0.8em; color: gray;'>📍 Near: </span><mark style='background-color: {bg_color}; color: black; padding: 0.1em 0.3em; border-radius: 3px; font-size: 0.9em;'>{v.location}</mark>", unsafe_allow_html=True)
                 st.markdown("---")
 
     # ── Document info ─────────────────────────────────────────────────────────
     with st.expander("📋 Document Info"):
-        st.write(f"**Pages:** {doc.page_count}")
-        st.write(f"**Has text layer:** {'Yes' if doc.has_text_layer else 'No (scanned)'}")
-        st.write(f"**Images found:** {len(doc.images)}")
-        st.write(f"**Tables found:** {len(doc.tables)}")
-        if doc.toc:
-            st.write(f"**TOC entries:** {len(doc.toc)}")
+        st.write(f"**Pages:** {len(doc.pages)}")
+        st.write(f"**Has text layer:** {'Yes' if bool(doc.raw_text.strip()) else 'No (scanned)'}")
+        images_count = sum(len(p.get_images()) for p in doc.pages)
+        st.write(f"**Images found:** {images_count}")
+        tables_count = sum(len(p.get_tables()) for p in doc.pages)
+        st.write(f"**Tables found:** {tables_count}")
 
 # Cleanup
 try:

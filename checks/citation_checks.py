@@ -135,7 +135,7 @@ def run_citation_checks(doc: ParsedDocument) -> list[Violation]:
     if not bib_text:
         violations.append(Violation(
             category=Category.CITATIONS,
-            severity=Severity.ERROR,
+            severity=Severity.CRITICAL,
             page=-1,
             description="No bibliography / references section found",
             detail="Expected a section titled 'References' or 'Bibliography'",

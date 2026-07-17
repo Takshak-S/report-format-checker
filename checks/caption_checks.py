@@ -139,7 +139,7 @@ def check_figure_caption_position(doc: ParsedDocument) -> list[Violation]:
         if not images_above:
             violations.append(Violation(
                 category=Category.CAPTIONS,
-                severity=Severity.ERROR,
+                severity=Severity.CRITICAL,
                 page=line.page_num,
                 description="Figure caption is not placed below its image",
                 detail="No image found above this caption on the page",
@@ -184,7 +184,7 @@ def check_table_caption_position(doc: ParsedDocument) -> list[Violation]:
         if not tables_below:
             violations.append(Violation(
                 category=Category.CAPTIONS,
-                severity=Severity.ERROR,
+                severity=Severity.CRITICAL,
                 page=line.page_num,
                 description="Table title is not placed above its table",
                 detail="No table found below this caption on the page",

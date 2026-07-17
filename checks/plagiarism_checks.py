@@ -133,7 +133,7 @@ def check_plagiarism(doc: ParsedDocument) -> list[Violation]:
 
                 violations.append(Violation(
                     category=Category.PLAGIARISM,
-                    severity=Severity.ERROR if best_ratio >= 0.85 else Severity.WARNING,
+                    severity=Severity.CRITICAL if best_ratio >= 0.85 else Severity.WARNING,
                     page=page_hint,
                     description=f"Possible plagiarism match with '{source_name}'",
                     detail=(

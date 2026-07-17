@@ -28,7 +28,7 @@ def check_page_size(doc: ParsedDocument) -> list[Violation]:
                 abs(h - PAGE_HEIGHT_PT) > relaxed_tolerance):
             violations.append(Violation(
                 category=Category.PAGE_LAYOUT,
-                severity=Severity.ERROR,
+                severity=Severity.CRITICAL,
                 page=page_num,
                 description="Page size is not A4",
                 detail=f"Found {w:.1f}×{h:.1f} pt, expected {PAGE_WIDTH_PT}×{PAGE_HEIGHT_PT} pt",
@@ -153,7 +153,7 @@ def check_margins(doc: ParsedDocument) -> list[Violation]:
             if eff_left < expected_left_margin - MARGIN_TOLERANCE_PT:
                 violations.append(Violation(
                     category=Category.PAGE_LAYOUT,
-                    severity=Severity.ERROR,
+                    severity=Severity.CRITICAL,
                     page=page_num,
                     description="Text extends into left binding margin",
                     detail=f"Text left edge at {eff_left:.1f} pt, required ≥ {expected_left_margin:.1f} pt",
@@ -162,7 +162,7 @@ def check_margins(doc: ParsedDocument) -> list[Violation]:
             if eff_right < MARGIN_RIGHT_PT - MARGIN_TOLERANCE_PT:
                 violations.append(Violation(
                     category=Category.PAGE_LAYOUT,
-                    severity=Severity.ERROR,
+                    severity=Severity.CRITICAL,
                     page=page_num,
                     description="Text extends into right margin",
                     detail=f"Right margin only {eff_right:.1f} pt, required ≥ {MARGIN_RIGHT_PT:.1f} pt",
@@ -171,7 +171,7 @@ def check_margins(doc: ParsedDocument) -> list[Violation]:
             if eff_top < MARGIN_TOP_PT - MARGIN_TOLERANCE_PT:
                 violations.append(Violation(
                     category=Category.PAGE_LAYOUT,
-                    severity=Severity.ERROR,
+                    severity=Severity.CRITICAL,
                     page=page_num,
                     description="Text extends into top margin",
                     detail=f"Top margin only {eff_top:.1f} pt, required ≥ {MARGIN_TOP_PT:.1f} pt",
@@ -197,7 +197,7 @@ def check_margins(doc: ParsedDocument) -> list[Violation]:
             if img.x0 < expected_left_margin - MARGIN_TOLERANCE_PT:
                 violations.append(Violation(
                     category=Category.PAGE_LAYOUT,
-                    severity=Severity.ERROR,
+                    severity=Severity.CRITICAL,
                     page=page_num,
                     description="Image extends into left binding margin",
                     detail=f"Image left edge at {img.x0:.1f} pt, required ≥ {expected_left_margin:.1f} pt",
@@ -206,7 +206,7 @@ def check_margins(doc: ParsedDocument) -> list[Violation]:
             if (page_w - img.x1) < MARGIN_RIGHT_PT - MARGIN_TOLERANCE_PT:
                 violations.append(Violation(
                     category=Category.PAGE_LAYOUT,
-                    severity=Severity.ERROR,
+                    severity=Severity.CRITICAL,
                     page=page_num,
                     description="Image extends into right margin",
                     detail=f"Image right edge at {img.x1:.1f} pt, right margin only {page_w - img.x1:.1f} pt",

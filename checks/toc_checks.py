@@ -42,7 +42,7 @@ def check_toc_exists(doc: ParsedDocument) -> list[Violation]:
     if not has_embedded_toc and not toc_pages:
         violations.append(Violation(
             category=Category.TOC,
-            severity=Severity.ERROR,
+            severity=Severity.CRITICAL,
             page=-1,
             description="No Table of Contents found",
             detail="Expected a 'Table of Contents' or 'Contents' section near the start of the document",
@@ -132,7 +132,7 @@ def check_toc_page_numbers(doc: ParsedDocument) -> list[Violation]:
             if page < 1 or page > doc.page_count:
                 violations.append(Violation(
                     category=Category.TOC,
-                    severity=Severity.ERROR,
+                    severity=Severity.CRITICAL,
                     page=-1,
                     description="TOC entry points to invalid page number",
                     detail=f"'{title[:50]}' → page {page} (document has {doc.page_count} pages)",

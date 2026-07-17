@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any
 
 import fitz          # PyMuPDF
+fitz.TOOLS.mupdf_display_errors(False)  # Silence xref formatting warnings
 import pdfplumber
 
 from nlp.dom import DocumentModel

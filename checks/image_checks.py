@@ -121,7 +121,7 @@ def check_image_dpi(doc: ParsedDocument) -> list[Violation]:
         if min_dpi < MIN_IMAGE_DPI:
             violations.append(Violation(
                 category=Category.IMAGES,
-                severity=Severity.ERROR,
+                severity=Severity.CRITICAL,
                 page=img.page_num,
                 description=f"Image DPI below required minimum ({MIN_IMAGE_DPI} DPI)",
                 detail=f"Found {xres}×{yres} DPI at position ({img.x0:.0f}, {img.y0:.0f})",

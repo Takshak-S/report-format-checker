@@ -136,7 +136,7 @@ def _check_line_font(line: LineInfo) -> list[Violation]:
     if not _is_times_new_roman(line.fontname):
         violations.append(Violation(
             category=Category.FONT,
-            severity=Severity.ERROR,
+            severity=Severity.CRITICAL,
             page=line.page_num,
             description=f"Wrong font family in {element}",
             detail=f"Found '{line.fontname}', expected Times New Roman",
