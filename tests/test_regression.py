@@ -1,7 +1,6 @@
 import pytest
 import os
 from pathlib import Path
-from checks.validators import ValidationConfig
 from utils.config import get_config
 from utils.error_model import ViolationCollector, Violation
 from checks.margin_validator import MarginValidator
@@ -9,6 +8,7 @@ from checks.font_validator import FontValidator
 from nlp.classifier import LayoutAnalyzer
 from ingestion.pdf_loader import load_pdf
 
+@pytest.mark.slow
 def test_sample_report_regression():
     # Construct paths
     base_dir = Path(__file__).parent.parent
