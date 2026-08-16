@@ -3,6 +3,7 @@ import csv
 from pathlib import Path
 from utils.error_model import ViolationCollector
 from utils.constants import Severity
+from utils.scoring import compute_score
 
 def generate_json_report(collector: ViolationCollector, pdf_name: str, output_path: str | Path = None) -> Path:
     if output_path is None:
@@ -45,9 +46,9 @@ def generate_html_report(collector: ViolationCollector, pdf_name: str, output_pa
         
     summary = collector.summary()
     total = summary['total']
-    
-    # Calculate document score (100 - (critical * 5) - (major * 2) - minor)
-    score = max(0, 100 - (summary.get('critical', 0) * 5) - (summary.get('major', 0) * 2) - summary.get('minor', 0))
+
+    # Document score — single source of truth in utils/scoring.py
+    score, grade = compute_score(collector)
     
     page_data = collector.by_page()
     heatmap_html = ""
@@ -173,7 +174,7 @@ def generate_html_report(collector: ViolationCollector, pdf_name: str, output_pa
             
             <div class="stats-grid">
                 <div class="stat-card score">
-                    <div class="stat-value" style="color: var(--success);">{score}/100</div>
+                    <div class="stat-value" style="color: var(--success);">{score}/100 ({grade})</div>
                     <div class="stat-label">Doc Score</div>
                 </div>
                 <div class="stat-card critical">

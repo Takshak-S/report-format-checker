@@ -16,6 +16,7 @@ from reporter.report_generator import generate_report
 from reporter.pdf_report_generator import generate_pdf_report
 from reporter.pdf_annotator import generate_annotated_pdf
 from utils.constants import Severity, Category
+from utils.scoring import document_summary
 
 
 # ── Page config ───────────────────────────────────────────────────────────────
@@ -59,8 +60,10 @@ if not uploaded:
     st.stop()
 
 # Save to temp file
+uploaded.seek(0)
+pdf_bytes = uploaded.read()
 with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp:
-    tmp.write(uploaded.read())
+    tmp.write(pdf_bytes)
     tmp_path = tmp.name
 
 st.success(f"Loaded: **{uploaded.name}** ({uploaded.size / 1024:.1f} KB)")
@@ -72,8 +75,9 @@ if "uploaded_filename" not in st.session_state or st.session_state.uploaded_file
     st.session_state.excel_report = None
     st.session_state.pdf_report = None
     st.session_state.annotated_pdf = None
+    st.session_state.pdf_bytes = pdf_bytes
 
-if st.button("▶ Run Format Check", type="primary", use_container_width=True):
+if st.button("▶ Run Format Check", type="primary", width="stretch"):
     progress_bar  = st.progress(0, text="Starting…")
     status_text   = st.empty()
 
@@ -129,105 +133,135 @@ if st.session_state.check_results is not None:
     collector = st.session_state.check_results
     doc = st.session_state.doc
 
-    summary = collector.summary()
+    tab_overview, tab_validation, tab_images, tab_tables = st.tabs([
+        "Overview", "Validation", "Images", "Tables"
+    ])
 
-    # ── Summary metrics ───────────────────────────────────────────────────────
-    st.divider()
-    col1, col2, col3, col4 = st.columns(4)
-    col1.metric("Total Issues", summary["total"])
-    col2.metric("🔴 Critical",  summary["critical"])
-    col3.metric("🟡 Warnings",  summary["warnings"])
-    col4.metric("🔵 Info",      summary["info"])
+    with tab_overview:
+        summary = document_summary(collector)
 
-    overall = "✅ PASS" if summary["critical"] == 0 else "❌ FAIL"
-    color   = "success" if summary["critical"] == 0 else "error"
-    getattr(st, color)(f"**Overall Status: {overall}**")
+        # ── Summary metrics ───────────────────────────────────────────────────────
+        st.divider()
+        col0, col1, col2, col3, col4 = st.columns(5)
+        col0.metric("Overall Format Score", f"{summary['score']}/100", summary["grade"])
+        col1.metric("Total Issues", summary["total"])
+        col2.metric("🔴 Critical",  summary["critical"])
+        col3.metric("🟡 Warnings",  summary["warnings"])
+        col4.metric("🔵 Info",      summary["info"])
 
-    # ── Download buttons ──────────────────────────────────────────────────────
-    col_dl1, col_dl2, col_dl3 = st.columns(3)
-    
-    with col_dl1:
-        if st.session_state.excel_report:
-            st.download_button(
-                label="⬇ Download Excel Report",
-                data=st.session_state.excel_report,
-                file_name=f"{Path(uploaded.name).stem}_format_report.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                use_container_width=True,
-            )
-            
-    with col_dl2:
-        if st.session_state.pdf_report:
-            st.download_button(
-                label="⬇ Download PDF Summary",
-                data=st.session_state.pdf_report,
-                file_name=f"{Path(uploaded.name).stem}_format_report.pdf",
-                mime="application/pdf",
-                use_container_width=True,
-            )
-            
-    with col_dl3:
-        if st.session_state.annotated_pdf:
-            st.download_button(
-                label="⬇ Download Highlighted PDF",
-                data=st.session_state.annotated_pdf,
-                file_name=f"{Path(uploaded.name).stem}_highlighted.pdf",
-                mime="application/pdf",
-                use_container_width=True,
-            )
+        overall = "✅ PASS" if summary["critical"] == 0 else "❌ FAIL"
+        color   = "success" if summary["critical"] == 0 else "error"
+        getattr(st, color)(f"**Overall Status: {overall}**")
 
-    # ── Per-category accordion ────────────────────────────────────────────────
-    st.divider()
-    st.subheader("Findings by Category")
+        # ── Document info ─────────────────────────────────────────────────────────
+        with st.expander("📋 Document Info", expanded=True):
+            st.write(f"**Pages:** {len(doc.pages)}")
+            st.write(f"**Has text layer:** {'Yes' if bool(doc.raw_text.strip()) else 'No (scanned)'}")
+            images_count = sum(len(p.get_images()) for p in doc.pages)
+            st.write(f"**Images found:** {images_count}")
+            tables_count = sum(len(p.get_tables()) for p in doc.pages)
+            st.write(f"**Tables found:** {tables_count}")
 
-    by_cat = collector.by_category()
-    severity_icon = {
-        Severity.CRITICAL: "🔴", 
-        Severity.MAJOR: "🟠", 
-        Severity.MINOR: "🟡", 
-        Severity.WARNING: "🟡", 
-        Severity.SUGGESTION: "🔵",
-        Severity.INFO: "🔵"
-    }
-
-    for cat in sorted(by_cat.keys()):
-        viols = by_cat[cat]
-        critical = sum(1 for v in viols if v.severity == Severity.CRITICAL)
-        major = sum(1 for v in viols if v.severity == Severity.MAJOR)
-        minor = sum(1 for v in viols if v.severity == Severity.MINOR)
-        warnings = sum(1 for v in viols if v.severity == Severity.WARNING)
+        # ── Download buttons ──────────────────────────────────────────────────────
+        st.subheader("📥 Downloads")
+        col_dl1, col_dl2, col_dl3 = st.columns(3)
         
-        if critical > 0:
-            badge = f"🔴 {critical} critical"
-        elif major > 0:
-            badge = f"🟠 {major} major"
-        elif minor > 0:
-            badge = f"🟡 {minor} minor"
-        elif warnings > 0:
-            badge = f"🟡 {warnings} warning(s)"
-        else:
-            badge = f"🔵 {len(viols)} info"
+        with col_dl1:
+            if st.session_state.excel_report:
+                st.download_button(
+                    label="⬇ Download Excel Report",
+                    data=st.session_state.excel_report,
+                    file_name=f"{Path(uploaded.name).stem}_format_report.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    width="stretch",
+                )
+                
+        with col_dl2:
+            if st.session_state.pdf_report:
+                st.download_button(
+                    label="⬇ Download PDF Summary",
+                    data=st.session_state.pdf_report,
+                    file_name=f"{Path(uploaded.name).stem}_format_report.pdf",
+                    mime="application/pdf",
+                    width="stretch",
+                )
+                
+        with col_dl3:
+            if st.session_state.annotated_pdf:
+                st.download_button(
+                    label="⬇ Download Highlighted PDF",
+                    data=st.session_state.annotated_pdf,
+                    file_name=f"{Path(uploaded.name).stem}_highlighted.pdf",
+                    mime="application/pdf",
+                    width="stretch",
+                )
 
-        with st.expander(f"**{cat}** — {badge}", expanded=(critical > 0 or major > 0)):
-            for v in sorted(viols, key=lambda x: (x.page if x.page > 0 else 9999)):
-                icon = severity_icon.get(v.severity, "⚪")
-                page_label = f"p.{v.page}" if v.page > 0 else "doc-level"
-                st.markdown(f"{icon} **[{page_label}]** {v.description}")
-                if v.detail:
-                    st.caption(f"↳ {v.detail}")
-                if v.location:
-                    bg_color = "#ffcccc" if v.severity in (Severity.CRITICAL, Severity.MAJOR) else "#fff0b3" if v.severity in (Severity.MINOR, Severity.WARNING) else "#e6f2ff"
-                    st.markdown(f"<span style='font-size: 0.8em; color: gray;'>📍 Near: </span><mark style='background-color: {bg_color}; color: black; padding: 0.1em 0.3em; border-radius: 3px; font-size: 0.9em;'>{v.location}</mark>", unsafe_allow_html=True)
-                st.markdown("---")
+    with tab_validation:
+        # ── Per-category accordion ────────────────────────────────────────────────
+        st.subheader("Findings by Category")
 
-    # ── Document info ─────────────────────────────────────────────────────────
-    with st.expander("📋 Document Info"):
-        st.write(f"**Pages:** {len(doc.pages)}")
-        st.write(f"**Has text layer:** {'Yes' if bool(doc.raw_text.strip()) else 'No (scanned)'}")
-        images_count = sum(len(p.get_images()) for p in doc.pages)
-        st.write(f"**Images found:** {images_count}")
-        tables_count = sum(len(p.get_tables()) for p in doc.pages)
-        st.write(f"**Tables found:** {tables_count}")
+        by_cat = collector.by_category()
+        severity_icon = {
+            Severity.CRITICAL: "🔴", 
+            Severity.MAJOR: "🟠", 
+            Severity.MINOR: "🟡", 
+            Severity.WARNING: "🟡", 
+            Severity.SUGGESTION: "🔵",
+            Severity.INFO: "🔵"
+        }
+
+        for cat in sorted(by_cat.keys()):
+            viols = by_cat[cat]
+            critical = sum(1 for v in viols if v.severity == Severity.CRITICAL)
+            major = sum(1 for v in viols if v.severity == Severity.MAJOR)
+            minor = sum(1 for v in viols if v.severity == Severity.MINOR)
+            warnings = sum(1 for v in viols if v.severity == Severity.WARNING)
+            
+            if critical > 0:
+                badge = f"🔴 {critical} critical"
+            elif major > 0:
+                badge = f"🟠 {major} major"
+            elif minor > 0:
+                badge = f"🟡 {minor} minor"
+            elif warnings > 0:
+                badge = f"🟡 {warnings} warning(s)"
+            else:
+                badge = f"🔵 {len(viols)} info"
+
+            with st.expander(f"**{cat}** — {badge}", expanded=(critical > 0 or major > 0)):
+                for v in sorted(viols, key=lambda x: (x.page if x.page > 0 else 9999)):
+                    icon = severity_icon.get(v.severity, "⚪")
+                    page_label = f"p.{v.page}" if v.page > 0 else "doc-level"
+                    st.markdown(f"{icon} **[{page_label}]** {v.description}")
+                    if v.detail:
+                        st.caption(f"↳ {v.detail}")
+                    if v.reason:
+                        st.markdown(f"**Reason:** {v.reason}")
+                    exp_det = []
+                    if v.expected:
+                        exp_det.append(f"**Expected:** {v.expected}")
+                    if v.detected:
+                        exp_det.append(f"**Detected:** {v.detected}")
+                    if v.confidence:
+                        exp_det.append(f"**Confidence:** {v.confidence:.2f}")
+                    if exp_det:
+                        st.markdown(" · ".join(exp_det))
+                    if v.location:
+                        bg_color = "#ffcccc" if v.severity in (Severity.CRITICAL, Severity.MAJOR) else "#fff0b3" if v.severity in (Severity.MINOR, Severity.WARNING) else "#e6f2ff"
+                        st.markdown(f"<span style='font-size: 0.8em; color: gray;'>📍 Near: </span><mark style='background-color: {bg_color}; color: black; padding: 0.1em 0.3em; border-radius: 3px; font-size: 0.9em;'>{v.location}</mark>", unsafe_allow_html=True)
+                    if v.suggested_fix:
+                        st.markdown(f"**Suggested fix:** {v.suggested_fix}")
+                    if v.signals:
+                        st.markdown(f"**Signals:** {', '.join(v.signals)}")
+                    st.markdown("---")
+
+    with tab_images:
+        from ui.images_tab import render_images_tab
+        render_images_tab(doc, st.session_state.pdf_bytes)
+
+    with tab_tables:
+        from ui.tables_tab import render_tables_tab
+        render_tables_tab(doc)
 
 # Cleanup
 try:

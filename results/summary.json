@@ -1,0 +1,490 @@
+{
+ "generated_at": "2026-08-16T20:55:27+00:00",
+ "implementation": "checker.run_checks (final, noise-filtered) + reporter.pdf_annotator.generate_annotated_pdf",
+ "results": [
+  {
+   "filename": "2026W10140U02H005_22BCE3217.pdf",
+   "total": 0,
+   "violations": []
+  },
+  {
+   "filename": "2026W10140U02H007_22BCE0927.pdf",
+   "total": 4,
+   "violations": [
+    {
+     "category": "Page Layout",
+     "severity": "MINOR",
+     "page": 36,
+     "description": "Right margin overflow in LIST.",
+     "expected": "<= 523.276pt",
+     "detected": "641.53pt",
+     "confidence": 0.7638782002405439,
+     "reason": "Single line overflow.",
+     "suggested_fix": "Enable URL wrapping, insert soft breaks, or adjust kerning.",
+     "location": "3. Update Kubernetes Deployment YAML: Th...",
+     "bbox": [
+      122.4391223,
+      156.48891315912,
+      641.5270754000001,
+      169.68811388615995
+     ]
+    },
+    {
+     "category": "Page Layout",
+     "severity": "MINOR",
+     "page": 46,
+     "description": "Right margin overflow in LIST.",
+     "expected": "<= 523.276pt",
+     "detected": "547.48pt",
+     "confidence": 0.7638782002405439,
+     "reason": "Single line overflow.",
+     "suggested_fix": "Enable URL wrapping, insert soft breaks, or adjust kerning.",
+     "location": "\u2022 The runtime stage installs only necess...",
+     "bbox": [
+      152.97564905000002,
+      539.8710813091201,
+      547.483333448,
+      552.35293417056
+     ]
+    },
+    {
+     "category": "Page Layout",
+     "severity": "MINOR",
+     "page": 58,
+     "description": "Right margin overflow in BODY_TEXT.",
+     "expected": "<= 523.276pt",
+     "detected": "562.93pt",
+     "confidence": 0.7772998611746912,
+     "reason": "Single line overflow.",
+     "suggested_fix": "Enable URL wrapping, insert soft breaks, or adjust kerning.",
+     "location": "A few decisions in this Dockerfile move ...",
+     "bbox": [
+      125.55227795,
+      236.91393420912004,
+      562.926065546,
+      249.39578707056
+     ]
+    },
+    {
+     "category": "Page Layout",
+     "severity": "MINOR",
+     "page": 60,
+     "description": "Right margin overflow in BODY_TEXT.",
+     "expected": "<= 523.276pt",
+     "detected": "665.96pt",
+     "confidence": 0.7772998611746912,
+     "reason": "Single line overflow.",
+     "suggested_fix": "Enable URL wrapping, insert soft breaks, or adjust kerning.",
+     "location": "The Jenkinsfile leans on a few patterns ...",
+     "bbox": [
+      125.55227794999998,
+      296.26190145911994,
+      665.9622971000001,
+      308.7437543205599
+     ]
+    }
+   ]
+  },
+  {
+   "filename": "2026W10140U03H004_22BCB0096.pdf",
+   "total": 2,
+   "violations": [
+    {
+     "category": "Page Layout",
+     "severity": "MINOR",
+     "page": 53,
+     "description": "Right margin overflow in BODY_TEXT.",
+     "expected": "<= 523.276pt",
+     "detected": "553.89pt",
+     "confidence": 0.7772998611746912,
+     "reason": "Single line overflow.",
+     "suggested_fix": "Enable URL wrapping, insert soft breaks, or adjust kerning.",
+     "location": "I built the PDF loading module in (pipel...",
+     "bbox": [
+      107.9924,
+      140.89126771584006,
+      553.8873544330401,
+      153.40898797056002
+     ]
+    },
+    {
+     "category": "Captions",
+     "severity": "INFO",
+     "page": 59,
+     "description": "Caption numbering gap: expected 4, found 7",
+     "expected": "4",
+     "detected": "7",
+     "confidence": 1.0,
+     "reason": "Caption numbers advanced from 3 to 7 instead of the expected next number 4.",
+     "suggested_fix": "Renumber captions to advance correctly.",
+     "location": "Table 7.1: Stratified 5-Fold Cross-Valid...",
+     "bbox": [
+      147.58637960000001,
+      73.49579251055991,
+      483.6997220268802,
+      85.4515902705599
+     ]
+    }
+   ]
+  },
+  {
+   "filename": "2026W10140U03H008_22BCE0335.pdf",
+   "total": 5,
+   "violations": [
+    {
+     "category": "Page Layout",
+     "severity": "MINOR",
+     "page": 16,
+     "description": "Right margin overflow in BODY_TEXT.",
+     "expected": "<= 523.276pt",
+     "detected": "543.49pt",
+     "confidence": 0.7772998611746912,
+     "reason": "Single line overflow.",
+     "suggested_fix": "Enable URL wrapping, insert soft breaks, or adjust kerning.",
+     "location": "fees\u2014charges triggered simply by retriev...",
+     "bbox": [
+      107.9924,
+      183.68830186055993,
+      543.4942892057601,
+      195.64409962055993
+     ]
+    },
+    {
+     "category": "Page Layout",
+     "severity": "MINOR",
+     "page": 28,
+     "description": "Right margin overflow in BODY_TEXT.",
+     "expected": "<= 523.276pt",
+     "detected": "545.07pt",
+     "confidence": 0.7772998611746912,
+     "reason": "Single line overflow.",
+     "suggested_fix": "Enable URL wrapping, insert soft breaks, or adjust kerning.",
+     "location": "Staring intensely at this mountain of li...",
+     "bbox": [
+      107.9924,
+      438.6530494605599,
+      545.07245451008,
+      450.6088472205599
+     ]
+    },
+    {
+     "category": "Page Layout",
+     "severity": "MINOR",
+     "page": 56,
+     "description": "Right margin overflow in LIST.",
+     "expected": "<= 523.276pt",
+     "detected": "552.12pt",
+     "confidence": 0.7638782002405439,
+     "reason": "Single line overflow.",
+     "suggested_fix": "Enable URL wrapping, insert soft breaks, or adjust kerning.",
+     "location": "single function coughing up ETH wraps ti...",
+     "bbox": [
+      137.25886325000005,
+      641.81331256584,
+      552.1184051900001,
+      654.3310328205599
+     ]
+    },
+    {
+     "category": "Page Layout",
+     "severity": "MINOR",
+     "page": 61,
+     "description": "Right margin overflow in BODY_TEXT.",
+     "expected": "<= 523.276pt",
+     "detected": "576.49pt",
+     "confidence": 0.7772998611746912,
+     "reason": "Single line overflow.",
+     "suggested_fix": "Enable URL wrapping, insert soft breaks, or adjust kerning.",
+     "location": "of failure. Splitting that responsibilit...",
+     "bbox": [
+      107.9924,
+      129.6135982605599,
+      576.4922910233599,
+      141.5693960205599
+     ]
+    },
+    {
+     "category": "Alignment",
+     "severity": "MINOR",
+     "page": 52,
+     "description": "Paragraph alignment 'left' differs from required 'justified'.",
+     "expected": "justified",
+     "detected": "left",
+     "confidence": 0.7772998611746912,
+     "reason": "3/4 judged lines in paragraph use 'left' alignment instead of 'justified'.",
+     "suggested_fix": "Set paragraph alignment to 'justified'.",
+     "location": "Bidding logic acts almost predatorily. It calculat...",
+     "bbox": [
+      107.9924,
+      75.33888466055998,
+      521.9140742489602,
+      173.97401617055993
+     ]
+    }
+   ]
+  },
+  {
+   "filename": "2026W10167P01H013_24MAI0005.pdf",
+   "total": 1,
+   "violations": [
+    {
+     "category": "Captions",
+     "severity": "INFO",
+     "page": 36,
+     "description": "Caption numbering gap: expected 5, found 7",
+     "expected": "5",
+     "detected": "7",
+     "confidence": 1.0,
+     "reason": "Caption numbers advanced from 4 to 7 instead of the expected next number 5.",
+     "suggested_fix": "Renumber captions to advance correctly.",
+     "location": "Table 7.1: Performance Evaluation Metric...",
+     "bbox": [
+      212.48162420000003,
+      73.49579251055991,
+      418.80282614431997,
+      85.4515902705599
+     ]
+    }
+   ]
+  },
+  {
+   "filename": "2026W10167P01H014_24MAI0027.pdf",
+   "total": 1,
+   "violations": [
+    {
+     "category": "Captions",
+     "severity": "INFO",
+     "page": 47,
+     "description": "Caption numbering gap: expected 5, found 7",
+     "expected": "5",
+     "detected": "7",
+     "confidence": 1.0,
+     "reason": "Caption numbers advanced from 4 to 7 instead of the expected next number 5.",
+     "suggested_fix": "Renumber captions to advance correctly.",
+     "location": "Table 7.2: End-to-end performance of the...",
+     "bbox": [
+      174.6477326,
+      127.9945173105599,
+      456.63717856736,
+      139.9503150705599
+     ]
+    }
+   ]
+  },
+  {
+   "filename": "2026W10167U01H015_22BCE0508.pdf",
+   "total": 2,
+   "violations": [
+    {
+     "category": "Page Layout",
+     "severity": "MINOR",
+     "page": 3,
+     "description": "Right margin overflow in BODY_TEXT.",
+     "expected": "<= 523.276pt",
+     "detected": "544.36pt",
+     "confidence": 0.7772998611746912,
+     "reason": "Single line overflow.",
+     "suggested_fix": "Enable URL wrapping, insert soft breaks, or adjust kerning.",
+     "location": "DEEP LEARNING FOR TAMIL NADU\u201d submitted ...",
+     "bbox": [
+      108.0,
+      156.55521119999992,
+      544.3648,
+      168.5104111999999
+     ]
+    },
+    {
+     "category": "Captions",
+     "severity": "INFO",
+     "page": 30,
+     "description": "Caption numbering gap: expected 5, found 6",
+     "expected": "5",
+     "detected": "6",
+     "confidence": 1.0,
+     "reason": "Caption numbers advanced from 4 to 6 instead of the expected next number 5.",
+     "suggested_fix": "Renumber captions to advance correctly.",
+     "location": "Table 6.1: Summary of Models and Key Hyp...",
+     "bbox": [
+      176.87684405000002,
+      101.98821706056003,
+      454.4067774528801,
+      113.94401482056003
+     ]
+    }
+   ]
+  },
+  {
+   "filename": "2026W10167U01H016_22BCE0309.pdf",
+   "total": 2,
+   "violations": [
+    {
+     "category": "Page Layout",
+     "severity": "MINOR",
+     "page": 29,
+     "description": "Right margin overflow in LIST.",
+     "expected": "<= 523.276pt",
+     "detected": "565.99pt",
+     "confidence": 0.7638782002405439,
+     "reason": "Single line overflow.",
+     "suggested_fix": "Enable URL wrapping, insert soft breaks, or adjust kerning.",
+     "location": "\u2022 ResidualBlock (torch.nn.Module): Defin...",
+     "bbox": [
+      127.22136140000002,
+      257.88901171055977,
+      565.9871833942399,
+      269.84480947055977
+     ]
+    },
+    {
+     "category": "Page Layout",
+     "severity": "MINOR",
+     "page": 32,
+     "description": "Right margin overflow in LIST.",
+     "expected": "<= 523.276pt",
+     "detected": "567.93pt",
+     "confidence": 0.7638782002405439,
+     "reason": "Single line overflow.",
+     "suggested_fix": "Enable URL wrapping, insert soft breaks, or adjust kerning.",
+     "location": "threshold is as follows: lambda=sigma*sq...",
+     "bbox": [
+      137.25886325,
+      193.6518000105599,
+      567.92547710408,
+      205.6075977705599
+     ]
+    }
+   ]
+  },
+  {
+   "filename": "2026W10167U03H018_22BCE3372.pdf",
+   "total": 3,
+   "violations": [
+    {
+     "category": "Page Layout",
+     "severity": "MINOR",
+     "page": 25,
+     "description": "Right margin overflow in BODY_TEXT.",
+     "expected": "<= 523.276pt",
+     "detected": "550.71pt",
+     "confidence": 0.7772998611746912,
+     "reason": "Single line overflow.",
+     "suggested_fix": "Enable URL wrapping, insert soft breaks, or adjust kerning.",
+     "location": "Pusara and Brodley Pusara and Brodley (2...",
+     "bbox": [
+      119.6989853,
+      254.40783766055995,
+      550.705494548,
+      266.36363542055994
+     ]
+    },
+    {
+     "category": "Page Layout",
+     "severity": "MINOR",
+     "page": 63,
+     "description": "Right margin overflow in BODY_TEXT.",
+     "expected": "<= 523.276pt",
+     "detected": "549.17pt",
+     "confidence": 0.7772998611746912,
+     "reason": "Single line overflow.",
+     "suggested_fix": "Enable URL wrapping, insert soft breaks, or adjust kerning.",
+     "location": "of parallel information. The features id...",
+     "bbox": [
+      107.9924,
+      498.9001672658399,
+      549.1667708956641,
+      511.4178875205599
+     ]
+    },
+    {
+     "category": "Captions",
+     "severity": "INFO",
+     "page": 59,
+     "description": "Caption numbering gap: expected 6, found 7",
+     "expected": "6",
+     "detected": "7",
+     "confidence": 1.0,
+     "reason": "Caption numbers advanced from 5 to 7 instead of the expected next number 6.",
+     "suggested_fix": "Renumber captions to advance correctly.",
+     "location": "Table 7.1: Classification Performance of...",
+     "bbox": [
+      165.99830015,
+      418.4950416105598,
+      465.2877854760802,
+      430.4508393705598
+     ]
+    }
+   ]
+  },
+  {
+   "filename": "2026W10230U01H019_22BCE0420.pdf",
+   "total": 0,
+   "violations": []
+  },
+  {
+   "filename": "2026W10243I01H026_21MID0051.pdf",
+   "total": 2,
+   "violations": [
+    {
+     "category": "Captions",
+     "severity": "INFO",
+     "page": 32,
+     "description": "Caption numbering gap: expected 3, found 4",
+     "expected": "3",
+     "detected": "4",
+     "confidence": 1.0,
+     "reason": "Caption numbers advanced from 2 to 4 instead of the expected next number 3.",
+     "suggested_fix": "Renumber captions to advance correctly.",
+     "location": "Figure 4.1: System Architecture Diagram",
+     "bbox": [
+      216.16380830000003,
+      650.5206423105599,
+      415.1202388241601,
+      662.47644007056
+     ]
+    },
+    {
+     "category": "Captions",
+     "severity": "INFO",
+     "page": 49,
+     "description": "Caption numbering gap: expected 5, found 7",
+     "expected": "5",
+     "detected": "7",
+     "confidence": 1.0,
+     "reason": "Caption numbers advanced from 4 to 7 instead of the expected next number 5.",
+     "suggested_fix": "Renumber captions to advance correctly.",
+     "location": "Figure 7.1: Loss Curve of the Model",
+     "bbox": [
+      227.86839350000002,
+      544.6553493105599,
+      403.41537201008,
+      556.6111470705599
+     ]
+    }
+   ]
+  },
+  {
+   "filename": "2026W10243P01H023_24MCS0036.pdf",
+   "total": 1,
+   "violations": [
+    {
+     "category": "Captions",
+     "severity": "INFO",
+     "page": 53,
+     "description": "Caption numbering gap: expected 6, found 7",
+     "expected": "6",
+     "detected": "7",
+     "confidence": 1.0,
+     "reason": "Caption numbers advanced from 5 to 7 instead of the expected next number 6.",
+     "suggested_fix": "Renumber captions to advance correctly.",
+     "location": "Table 7.1: Software Tools and Libraries ...",
+     "bbox": [
+      206.89234475000003,
+      569.2875808605597,
+      424.39221759992006,
+      581.2433786205597
+     ]
+    }
+   ]
+  }
+ ]
+}

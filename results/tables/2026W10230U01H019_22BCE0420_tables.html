@@ -1,0 +1,57 @@
+<!DOCTYPE html><html><head><meta charset='utf-8'>
+<title>Tables — 2026W10230U01H019_22BCE0420.pdf</title>
+<style>
+body { font-family: -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+       margin: 2rem auto; max-width: 1200px; color: #1a1a1a; line-height: 1.5; }
+h1 { font-size: 1.6rem; border-bottom: 2px solid #333; padding-bottom: 0.3rem; }
+h2 { font-size: 1.25rem; margin-top: 2rem; color: #222; }
+.table-container { overflow-x: auto; width: 100%; border: 1px solid #ddd;
+                   border-radius: 4px; }
+table { border-collapse: collapse; margin: 1rem 0; width: 100%;
+        font-size: 0.9rem; min-width: 100%; }
+th, td { border: 1px solid #bbb; padding: 6px 10px; text-align: left;
+         vertical-align: top; word-break: break-word; min-width: 8rem; }
+th { background: #eef1f6; font-weight: 600; position: sticky; top: 0; }
+tr:nth-child(even) td { background: #fafbfc; }
+.meta { color: #444; }
+.caption { font-style: italic; margin: 0.5rem 0; }
+.summary { border-collapse: collapse; }
+.none { color: #888; font-style: italic; }
+a { color: #0366d6; }
+</style></head><body>
+<h1>Tables — 2026W10230U01H019_22BCE0420.pdf</h1>
+<p class='meta'>PDF: 2026W10230U01H019_22BCE0420.pdf</p>
+<p class='meta'>Total detected tables: 2</p>
+<p class='meta'>Structural TableNodes (pdfplumber): 2 | TABLE-classified paragraphs (classifier): 0</p>
+<p class='meta'>Page numbers are PDF page numbers (1-based). Printed page numbers are not separately extracted by the current implementation.</p>
+<h2>Summary</h2>
+<table class='summary'><tr><th>Table</th><th>PDF Page</th><th>Orientation</th><th>Rows × Cols</th><th>Caption</th></tr>
+<tr><td>1</td><td>24</td><td>portrait</td><td>10 × 3</td><td>Table 4.1: Hyperparameter and Architectural Configuration of Deep Learning Models</td></tr>
+<tr><td>2</td><td>30</td><td>portrait</td><td>4 × 5</td><td><span class="none">No caption detected</span></td></tr>
+</table>
+<h2>Extracted Tables</h2>
+<h2>Table 1</h2>
+<p class='meta'>Page: 24 (PDF page number) | Orientation: portrait</p>
+<p class='caption'>Caption: Table 4.1: Hyperparameter and Architectural Configuration of Deep Learning Models (caption number: 4.1)</p>
+<div class='table-container'><table>
+<thead><tr><th>Parameter</th><th>CNN-LSTM (Classifier)</th><th>Deep Autoencoder<br>(Anomaly)</th></tr></thead><tbody>
+<tr><td>Learning Type</td><td>Supervised</td><td>Unsupervised</td></tr>
+<tr><td>Input Shape</td><td>3D Tensor (Samples,<br>Timesteps, Features)</td><td>2D Tensor (Samples, Fea-<br>tures)</td></tr>
+<tr><td>Core Architecture</td><td>Conv1D → MaxPooling1D<br>→ LSTM</td><td>Dense (Encoder → Bottle-<br>neck → Decoder)</td></tr>
+<tr><td>Hidden Units/Filters</td><td>Conv1D (64 filters), LSTM<br>(64 units)</td><td>Encoder (64, 32), Bottleneck<br>(16), Decoder (32, 64)</td></tr>
+<tr><td>Activation Functions</td><td>ReLU (Hidden), Sigmoid<br>(Output)</td><td>ReLU (Hidden), Sigmoid<br>(Output)</td></tr>
+<tr><td>Loss Function</td><td>Binary Crossentropy</td><td>Mean Squared Error (MSE)</td></tr>
+<tr><td>Optimizer</td><td>Adam (Learning Rate =<br>0.001)</td><td>Adam (Learning Rate =<br>0.001)</td></tr>
+<tr><td>Batch Size</td><td>256</td><td>256</td></tr>
+<tr><td>Early Stopping</td><td>Patience = 5 epochs</td><td>Patience = 5 epochs (Moni-<br>tor: Validation Loss)</td></tr>
+</tbody></table></div>
+<h2>Table 2</h2>
+<p class='meta'>Page: 30 (PDF page number) | Orientation: portrait</p>
+<p class="caption">Caption: No caption detected</p>
+<div class='table-container'><table>
+<thead><tr><th>Model Architecture</th><th>Precision</th><th>Recall</th><th>F1-Score</th><th>FPR</th></tr></thead><tbody>
+<tr><td>Standalone CNN-LSTM</td><td>0.99</td><td>0.99</td><td>0.99</td><td>0.1%</td></tr>
+<tr><td>Standalone Autoencoder</td><td>0.88</td><td>0.90</td><td>0.89</td><td>1.07%</td></tr>
+<tr><td>Proposed Hybrid Pipeline</td><td>0.99</td><td>0.99</td><td>0.99</td><td>1.00%</td></tr>
+</tbody></table></div>
+</body></html>

@@ -59,7 +59,8 @@ class TablesConfig:
 
 @dataclass
 class ImagesConfig:
-    min_dpi: int = 600
+    # DPI check removed per user request; kept for config compatibility
+    min_dpi: int = 300
 
 @dataclass
 class EquationsConfig:

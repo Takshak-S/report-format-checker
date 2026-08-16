@@ -2,10 +2,7 @@
 checks/image_checks.py
 
 Checks:
-  1. Embedded image DPI >= 600 (via PyMuPDF xres/yres)
-  2. Fallback DPI estimation via Pillow when xres=0
-  3. Computed DPI fallback from pixel dimensions / rendered size
-  4. Graph axis label presence via pytesseract OCR on rasterized pages
+  1. Graph axis label presence via pytesseract OCR on rasterized pages
 """
 from __future__ import annotations
 
@@ -14,8 +11,8 @@ import subprocess
 import tempfile
 from pathlib import Path
 
-from ingestion.pdf_loader import ParsedDocument, ImageInfo
-from utils.constants import MIN_IMAGE_DPI, Severity, Category
+from ingestion.pdf_loader import ParsedDocument
+from utils.constants import Severity, Category
 from utils.error_model import Violation
 
 try:
@@ -29,105 +26,6 @@ try:
     TESSERACT_AVAILABLE = True
 except ImportError:
     TESSERACT_AVAILABLE = False
-
-
-# ── DPI check ─────────────────────────────────────────────────────────────────
-
-def _estimate_dpi_from_bytes(img_info: ImageInfo) -> int | None:
-    """Use Pillow to read DPI from image bytes when PyMuPDF returns 0."""
-    if not PIL_AVAILABLE or not img_info.image_bytes:
-        return None
-    try:
-        with Image.open(io.BytesIO(img_info.image_bytes)) as im:
-            dpi_info = im.info.get("dpi")
-            if dpi_info:
-                return int(min(dpi_info))
-    except Exception:
-        pass
-    return None
-
-
-def _compute_dpi_from_rendered_size(img_info: ImageInfo) -> int | None:
-    """
-    Estimate DPI from pixel dimensions and rendered size on the page.
-    DPI = pixel_width / (rendered_width_in_points / 72)
-    """
-    rendered_w_pt = img_info.x1 - img_info.x0
-    rendered_h_pt = img_info.y1 - img_info.y0
-
-    if rendered_w_pt <= 0 or rendered_h_pt <= 0:
-        return None
-    if img_info.width_px <= 0 or img_info.height_px <= 0:
-        return None
-
-    dpi_x = img_info.width_px / (rendered_w_pt / 72.0)
-    dpi_y = img_info.height_px / (rendered_h_pt / 72.0)
-    return int(min(dpi_x, dpi_y))
-
-
-def _is_tiny_image(img_info: ImageInfo) -> bool:
-    """
-    Check if an image is tiny/decorative (less than 20×20 pixels
-    or rendered area < 1 sq inch = 72×72 pt²).
-    """
-    if img_info.width_px < 20 or img_info.height_px < 20:
-        return True
-    rendered_w = img_info.x1 - img_info.x0
-    rendered_h = img_info.y1 - img_info.y0
-    if rendered_w < 20 or rendered_h < 20:
-        return True
-    # Rendered area < 1 sq inch (5184 pt²)
-    if rendered_w * rendered_h < 5184:
-        return True
-    return False
-
-
-def check_image_dpi(doc: ParsedDocument) -> list[Violation]:
-    violations = []
-
-    for img in doc.images:
-        # Skip cover page images (e.g. logos)
-        if img.page_num == 1:
-            continue
-        # Skip tiny/decorative images
-        if _is_tiny_image(img):
-            continue
-
-        xres = img.xres
-        yres = img.yres
-
-        # If PyMuPDF returned 0, try Pillow fallback
-        if xres == 0 or yres == 0:
-            estimated = _estimate_dpi_from_bytes(img)
-            if estimated is not None:
-                xres = yres = estimated
-            else:
-                # Try computing from pixel dimensions / rendered size
-                computed = _compute_dpi_from_rendered_size(img)
-                if computed is not None:
-                    xres = yres = computed
-                else:
-                    # Cannot determine DPI — report as info
-                    violations.append(Violation(
-                        category=Category.IMAGES,
-                        severity=Severity.INFO,
-                        page=img.page_num,
-                        description="Could not determine image DPI",
-                        detail=f"Image at ({img.x0:.0f}, {img.y0:.0f}) — verify manually that DPI ≥ {MIN_IMAGE_DPI}",
-                    ))
-                    continue
-
-        min_dpi = min(xres, yres)
-        if min_dpi < MIN_IMAGE_DPI:
-            violations.append(Violation(
-                category=Category.IMAGES,
-                severity=Severity.CRITICAL,
-                page=img.page_num,
-                description=f"Image DPI below required minimum ({MIN_IMAGE_DPI} DPI)",
-                detail=f"Found {xres}×{yres} DPI at position ({img.x0:.0f}, {img.y0:.0f})",
-            ))
-
-    return violations
 
 
 # ── Graph axis label check via OCR ────────────────────────────────────────────
@@ -282,6 +180,5 @@ def check_graph_axes(doc: ParsedDocument) -> list[Violation]:
 
 def run_image_checks(doc: ParsedDocument) -> list[Violation]:
     v = []
-    v.extend(check_image_dpi(doc))
     v.extend(check_graph_axes(doc))
     return v

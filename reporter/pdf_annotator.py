@@ -188,8 +188,15 @@ def generate_annotated_pdf(
     if doc.page_count > 0:
         _add_legend(doc[0])
 
+    unanchored: list[Violation] = []
+
     for page_num, violations in sorted(by_page.items()):
+        if page_num == -1:
+            continue  # handled below as document-level notes
         if page_num < 1 or page_num > doc.page_count:
+            # No valid page (e.g. page 0 from caption continuity): render as
+            # a document-level note on page 1 rather than dropping it.
+            unanchored.extend(violations)
             continue
 
         page = doc[page_num - 1]
@@ -223,7 +230,7 @@ def generate_annotated_pdf(
             if not highlighted:
                 note_y = _add_page_note(page, v, colors, note_y)
 
-    doc_level = by_page.get(-1, [])
+    doc_level = by_page.get(-1, []) + unanchored
     if doc_level and doc.page_count > 0:
         page = doc[0]
         note_y = 40.0

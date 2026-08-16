@@ -13,6 +13,7 @@ from fpdf import FPDF
 
 from utils.error_model import ViolationCollector
 from utils.constants import Severity
+from utils.scoring import compute_score
 
 # Define colors (R, G, B)
 COLOR_ERROR = (220, 53, 69)     # Red
@@ -71,15 +72,14 @@ def generate_pdf_report(
     
     pdf.set_font("helvetica", "", 11)
     pdf.set_text_color(*COLOR_TEXT)
-    pdf.cell(0, 8, f"Score: 100", ln=True) # Static score or compute one if needed
+    score, grade = compute_score(collector)
+    pdf.cell(0, 8, f"Score: {score}/100 ({grade})", ln=True)
     
-    pdf.cell(0, 8, f"Total Findings: {summary.get('total', 0)}", ln=True)
+    pdf.cell(0, 8, f"Total Findings: {summary['total']}", ln=True)
     pdf.set_text_color(*COLOR_ERROR)
-    pdf.cell(0, 8, f"Errors: {summary.get('errors', 0)}", ln=True)
+    pdf.cell(0, 8, f"Critical: {summary['critical']}   Major: {summary['major']}   Minor: {summary['minor']}", ln=True)
     pdf.set_text_color(200, 150, 0) # Darker yellow for text
-    pdf.cell(0, 8, f"Warnings: {summary.get('warnings', 0)}", ln=True)
-    pdf.set_text_color(*COLOR_INFO)
-    pdf.cell(0, 8, f"Info: {summary.get('info', 0)}", ln=True)
+    pdf.cell(0, 8, f"Warnings: {summary['warnings']}   Suggestions: {summary['suggestions']}   Info: {summary['info']}", ln=True)
     pdf.ln(10)
     
     # ── Detailed Violations ───────────────────────────────────────────────────

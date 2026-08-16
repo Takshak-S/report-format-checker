@@ -1,0 +1,108 @@
+{
+  "generated_at": "2026-08-16T20:08:26+00:00",
+  "pdfs": [
+    {
+      "filename": "2026W10140U02H005_22BCE3217.pdf",
+      "table_nodes": 8,
+      "table_paragraphs": 52,
+      "captioned": 3,
+      "uncaptioned": 5,
+      "landscape_tables": 4
+    },
+    {
+      "filename": "2026W10140U02H007_22BCE0927.pdf",
+      "table_nodes": 36,
+      "table_paragraphs": 14,
+      "captioned": 11,
+      "uncaptioned": 25,
+      "landscape_tables": 0
+    },
+    {
+      "filename": "2026W10140U03H004_22BCB0096.pdf",
+      "table_nodes": 7,
+      "table_paragraphs": 6,
+      "captioned": 5,
+      "uncaptioned": 2,
+      "landscape_tables": 0
+    },
+    {
+      "filename": "2026W10140U03H008_22BCE0335.pdf",
+      "table_nodes": 10,
+      "table_paragraphs": 22,
+      "captioned": 10,
+      "uncaptioned": 0,
+      "landscape_tables": 0
+    },
+    {
+      "filename": "2026W10167P01H013_24MAI0005.pdf",
+      "table_nodes": 3,
+      "table_paragraphs": 2,
+      "captioned": 3,
+      "uncaptioned": 0,
+      "landscape_tables": 0
+    },
+    {
+      "filename": "2026W10167P01H014_24MAI0027.pdf",
+      "table_nodes": 5,
+      "table_paragraphs": 4,
+      "captioned": 0,
+      "uncaptioned": 5,
+      "landscape_tables": 0
+    },
+    {
+      "filename": "2026W10167U01H015_22BCE0508.pdf",
+      "table_nodes": 6,
+      "table_paragraphs": 3,
+      "captioned": 6,
+      "uncaptioned": 0,
+      "landscape_tables": 0
+    },
+    {
+      "filename": "2026W10167U01H016_22BCE0309.pdf",
+      "table_nodes": 14,
+      "table_paragraphs": 13,
+      "captioned": 6,
+      "uncaptioned": 8,
+      "landscape_tables": 0
+    },
+    {
+      "filename": "2026W10167U03H018_22BCE3372.pdf",
+      "table_nodes": 18,
+      "table_paragraphs": 5,
+      "captioned": 17,
+      "uncaptioned": 1,
+      "landscape_tables": 0
+    },
+    {
+      "filename": "2026W10230U01H019_22BCE0420.pdf",
+      "table_nodes": 2,
+      "table_paragraphs": 0,
+      "captioned": 1,
+      "uncaptioned": 1,
+      "landscape_tables": 0
+    },
+    {
+      "filename": "2026W10243I01H026_21MID0051.pdf",
+      "table_nodes": 1,
+      "table_paragraphs": 3,
+      "captioned": 1,
+      "uncaptioned": 0,
+      "landscape_tables": 0
+    },
+    {
+      "filename": "2026W10243P01H023_24MCS0036.pdf",
+      "table_nodes": 1,
+      "table_paragraphs": 1,
+      "captioned": 1,
+      "uncaptioned": 0,
+      "landscape_tables": 0
+    }
+  ],
+  "totals": {
+    "pdfs": 12,
+    "table_nodes": 111,
+    "table_paragraphs": 125,
+    "captioned": 64,
+    "uncaptioned": 47
+  }
+}

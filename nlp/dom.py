@@ -21,6 +21,7 @@ class BlockType(Enum):
     CODE_BLOCK = "CODE_BLOCK"
     LIST = "LIST"
     APPENDIX = "APPENDIX"
+    BIBLIOGRAPHY = "BIBLIOGRAPHY"
     UNKNOWN = "UNKNOWN"
 
 @dataclass
@@ -100,6 +101,7 @@ class Paragraph(DOMNode):
 
 @dataclass
 class ImageNode(DOMNode):
+    xref: int = 0
     dpi_x: int = 0
     dpi_y: int = 0
     width_px: int = 0

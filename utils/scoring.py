@@ -6,7 +6,7 @@ Computes an overall format quality score from collected violations.
 from __future__ import annotations
 
 from utils.constants import Severity, Category
-from utils.error_model import Violation, ViolationCollector
+from utils.error_model import ViolationCollector
 
 ERROR_PENALTY   = 5
 WARNING_PENALTY = 2
@@ -57,19 +57,14 @@ def compute_score(collector: ViolationCollector) -> tuple[int, str]:
     return score, grade
 
 
-def score_to_violation(collector: ViolationCollector) -> Violation:
-    """Convert computed score into a document-level INFO violation."""
+def document_summary(collector: ViolationCollector) -> dict:
+    """
+    Return the document-level summary: the overall format score alongside the
+    raw finding counts.  The score is a summary metric (never a Violation), so
+    it is exposed here for the UI and tests.
+    """
     score, grade = compute_score(collector)
     summary = collector.summary()
-
-    return Violation(
-        category=Category.OVERALL_SCORE,
-        severity=Severity.INFO,
-        page=-1,
-        description=f"Overall format score: {score}/100 ({grade})",
-        detail=(
-            f"Based on {summary['total']} finding(s): "
-            f"{summary['errors']} error(s), {summary['warnings']} warning(s), "
-            f"{summary['info']} info"
-        ),
-    )
+    summary["score"] = score
+    summary["grade"] = grade
+    return summary

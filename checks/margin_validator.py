@@ -4,27 +4,49 @@ from typing import List, Tuple
 from nlp.dom import DocumentModel, BlockType, Paragraph
 from utils.error_model import Violation
 from utils.constants import Category, Severity
+from utils.profile import build_profile
 from checks.validators import ValidationRule
 
 URL_PATTERN = re.compile(r"(http[s]?://|www\.)[^\s]+")
 DOI_PATTERN = re.compile(r"10\.\d{4,9}/[-._;()/:A-Z0-9]+", re.IGNORECASE)
 EMAIL_PATTERN = re.compile(r"[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+")
 
+# Consecutive-word gap above which a line is treated as columnar/table content.
+# Measured on the corpus: genuine prose overflows show gaps of 2-9pt while
+# table rows (dataset comparisons) show 54-109pt, so 30pt is a safe divider.
+_COLUMNAR_GAP_PT = 30.0
+
+
+def _is_columnar_line(words) -> bool:
+    """True if the line's words are laid out in wide columns (table row)."""
+    ordered = sorted(words, key=lambda w: w.bbox.x0)
+    if len(ordered) < 3:
+        return False
+    gaps = [ordered[i + 1].bbox.x0 - ordered[i].bbox.x1
+            for i in range(len(ordered) - 1)]
+    return max(gaps) > _COLUMNAR_GAP_PT
+
 class MarginValidator(ValidationRule):
     def validate(self, doc: DocumentModel) -> List[Violation]:
         violations = []
-        
+
+        profile = self.profile if self.profile is not None else build_profile(doc, self.config)
         expected_left_pt = self.config.margins.left_inches * 72.0
         expected_right_pt = self.config.margins.right_inches * 72.0
-        
-        # We only check margins for body text and headings
+        tolerance = profile.margin_tolerance
+
+        # We only check margins for body text, headings, and list blocks.
+        # List items are validated with the same per-line edge analysis: bullet /
+        # hanging indentation is exempt via the is_indented rule, while genuinely
+        # overfull lines (e.g. a long unbreakable token pushed past the right
+        # margin) are flagged per-line.
         checkable_types = {
             BlockType.BODY_TEXT,
+            BlockType.LIST,
             BlockType.HEADING_1,
             BlockType.HEADING_2,
             BlockType.HEADING_3,
             BlockType.CHAPTER_TITLE,
-            BlockType.LIST,
             BlockType.REFERENCE,
             BlockType.APPENDIX
         }
@@ -52,6 +74,11 @@ class MarginValidator(ValidationRule):
                 words = line.get_words()
                 if not words:
                     continue
+                # Table cells / columnar rows (e.g. dataset comparison tables
+                # rendered as text) have large gaps between cell values and are
+                # excluded from margin checks — their edges are not text margins.
+                if _is_columnar_line(words):
+                    continue
                     
                 left_edges.append(words[0].bbox.x0)
                 right_edges.append(words[-1].bbox.x1)
@@ -63,21 +90,27 @@ class MarginValidator(ValidationRule):
             median_left = statistics.median(left_edges)
             median_right = statistics.median(right_edges)
             
-            if median_left < (expected_left_pt - 10.0):
+            # Indented paragraphs (quotations, declarations, list items) start
+            # further right than the body baseline and are exempt from the left
+            # margin rule; they may also legitimately overflow the right edge.
+            is_indented = (len(valid_lines) == 1
+                           and median_left > profile.body_left_indent + profile.indent_tolerance)
+            
+            if not is_indented and median_left < (expected_left_pt - tolerance):
                 if len(valid_lines) == 1:
                     # Single line left overflow is ignored or could be a minor warning, but we only strictly handled right overflow.
                     pass
                 else:
                     self._report_left_violation(p, valid_lines, expected_left_pt, median_left, violations)
                 
-            if median_right > (max_x1 + 10.0):
+            if median_right > (max_x1 + tolerance):
                 if len(valid_lines) == 1:
                     self._check_single_line_edge_case(p, valid_lines[0], max_x1, violations)
                 else:
                     self._report_right_violation(p, valid_lines, max_x1, median_right, violations)
-            elif max(right_edges) > (max_x1 + 10.0):
+            elif max(right_edges) > (max_x1 + tolerance):
                 # An overfull \hbox within a multi-line paragraph!
-                overflowing_lines = [l for i, l in enumerate(valid_lines) if right_edges[i] > (max_x1 + 10.0)]
+                overflowing_lines = [l for i, l in enumerate(valid_lines) if right_edges[i] > (max_x1 + tolerance)]
                 for ol in overflowing_lines:
                     self._check_single_line_edge_case(p, ol, max_x1, violations)
                 

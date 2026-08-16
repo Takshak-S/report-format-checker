@@ -46,7 +46,6 @@ LINE_SPACING_TOLERANCE = 0.5  # increased from 0.3 to reduce false positives
 JUSTIFICATION_TOLERANCE_PT = 8.0  # max allowed right-edge variance — updated from 8.0
 
 # ── Image Quality ──────────────────────────────────────────────────────────────
-MIN_IMAGE_DPI = 600
 
 # ── Header / Footer exclusion zones ───────────────────────────────────────────
 HEADER_ZONE_PT = 72.0   # content within this distance from top is header/footer

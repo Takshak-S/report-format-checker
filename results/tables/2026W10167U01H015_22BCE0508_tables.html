@@ -1,0 +1,104 @@
+<!DOCTYPE html><html><head><meta charset='utf-8'>
+<title>Tables — 2026W10167U01H015_22BCE0508.pdf</title>
+<style>
+body { font-family: -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+       margin: 2rem auto; max-width: 1200px; color: #1a1a1a; line-height: 1.5; }
+h1 { font-size: 1.6rem; border-bottom: 2px solid #333; padding-bottom: 0.3rem; }
+h2 { font-size: 1.25rem; margin-top: 2rem; color: #222; }
+.table-container { overflow-x: auto; width: 100%; border: 1px solid #ddd;
+                   border-radius: 4px; }
+table { border-collapse: collapse; margin: 1rem 0; width: 100%;
+        font-size: 0.9rem; min-width: 100%; }
+th, td { border: 1px solid #bbb; padding: 6px 10px; text-align: left;
+         vertical-align: top; word-break: break-word; min-width: 8rem; }
+th { background: #eef1f6; font-weight: 600; position: sticky; top: 0; }
+tr:nth-child(even) td { background: #fafbfc; }
+.meta { color: #444; }
+.caption { font-style: italic; margin: 0.5rem 0; }
+.summary { border-collapse: collapse; }
+.none { color: #888; font-style: italic; }
+a { color: #0366d6; }
+</style></head><body>
+<h1>Tables — 2026W10167U01H015_22BCE0508.pdf</h1>
+<p class='meta'>PDF: 2026W10167U01H015_22BCE0508.pdf</p>
+<p class='meta'>Total detected tables: 6</p>
+<p class='meta'>Structural TableNodes (pdfplumber): 6 | TABLE-classified paragraphs (classifier): 3</p>
+<p class='meta'>Page numbers are PDF page numbers (1-based). Printed page numbers are not separately extracted by the current implementation.</p>
+<h2>Summary</h2>
+<table class='summary'><tr><th>Table</th><th>PDF Page</th><th>Orientation</th><th>Rows × Cols</th><th>Caption</th></tr>
+<tr><td>1</td><td>30</td><td>portrait</td><td>8 × 2</td><td>Table 6.1: Summary of Models and Key Hyperparameters</td></tr>
+<tr><td>2</td><td>32</td><td>portrait</td><td>8 × 5</td><td>Table 7.1: Performance Comparison of Models on Holdout Set (Best Feature Set)</td></tr>
+<tr><td>3</td><td>32</td><td>portrait</td><td>3 × 6</td><td>Table 7.2: Best Model Performance Across Feature Sets</td></tr>
+<tr><td>4</td><td>34</td><td>portrait</td><td>6 × 2</td><td>Table 7.3: Top Crops by Predicted High-Performance Probability</td></tr>
+<tr><td>5</td><td>34</td><td>portrait</td><td>6 × 2</td><td>Table 7.4: Top Crops by Yield Potential</td></tr>
+<tr><td>6</td><td>34</td><td>portrait</td><td>6 × 2</td><td>Table 7.5: Top Crops by Profit Proxy</td></tr>
+</table>
+<h2>Extracted Tables</h2>
+<h2>Table 1</h2>
+<p class='meta'>Page: 30 (PDF page number) | Orientation: portrait</p>
+<p class='caption'>Caption: Table 6.1: Summary of Models and Key Hyperparameters (caption number: 6.1)</p>
+<div class='table-container'><table>
+<thead><tr><th>Model</th><th>Key Hyperparameters</th></tr></thead><tbody>
+<tr><td>Random Forest</td><td>n estimators=300–500, max depth=10–None,<br>class weight=balanced</td></tr>
+<tr><td>Gradient Boosting</td><td>n estimators=100–300, learning rate=0.03–0.1, max depth=3–5</td></tr>
+<tr><td>Logistic Regression</td><td>C=0.01–10, penalty=L1/L2, solver=liblinear/saga</td></tr>
+<tr><td>Support Vector<br>Machine</td><td>C=0.1–10, kernel=RBF, gamma=scale/auto</td></tr>
+<tr><td>XGBoost</td><td>n estimators=200–500, learning rate=0.03–0.1, max depth=4–8</td></tr>
+<tr><td>LightGBM</td><td>n estimators=200–500, num leaves=31–127, learning rate=0.03–0.1</td></tr>
+<tr><td>CatBoost</td><td>iterations=200–500, depth=4–8, learning rate=0.03–0.1</td></tr>
+</tbody></table></div>
+<h2>Table 2</h2>
+<p class='meta'>Page: 32 (PDF page number) | Orientation: portrait</p>
+<p class='caption'>Caption: Table 7.1: Performance Comparison of Models on Holdout Set (Best Feature Set) (caption number: 7.1)</p>
+<div class='table-container'><table>
+<thead><tr><th>Model</th><th>PR-AUC</th><th>F1 Score</th><th>Accuracy</th><th>ROC-AUC</th></tr></thead><tbody>
+<tr><td>Random Forest</td><td>0.8323</td><td>0.7301</td><td>0.8251</td><td>0.9442</td></tr>
+<tr><td>XGBoost</td><td>0.8323</td><td>0.7301</td><td>0.8251</td><td>0.9442</td></tr>
+<tr><td>Gradient Boosting</td><td>0.8323</td><td>0.7007</td><td>0.8824</td><td>0.9442</td></tr>
+<tr><td>CatBoost</td><td>0.8323</td><td>0.7301</td><td>0.8251</td><td>0.9442</td></tr>
+<tr><td>LightGBM</td><td>0.8323</td><td>0.7301</td><td>0.8251</td><td>0.9442</td></tr>
+<tr><td>Logistic Regression</td><td>0.8169</td><td>0.6930</td><td>0.8067</td><td>0.9341</td></tr>
+<tr><td>SVM</td><td>0.4829</td><td>0.7301</td><td>0.8251</td><td>0.8244</td></tr>
+</tbody></table></div>
+<h2>Table 3</h2>
+<p class='meta'>Page: 32 (PDF page number) | Orientation: portrait</p>
+<p class='caption'>Caption: Table 7.2: Best Model Performance Across Feature Sets (caption number: 7.2)</p>
+<div class='table-container'><table>
+<thead><tr><th>Feature Set</th><th>Model</th><th>PR-AUC</th><th>F1</th><th>Accuracy</th><th>ROC-AUC</th></tr></thead><tbody>
+<tr><td>Soil + Weather +<br>Requirements + Yield</td><td>Random Forest</td><td>0.8323</td><td>0.7301</td><td>0.8251</td><td>0.9442</td></tr>
+<tr><td>Soil + Weather +<br>Requirements</td><td>Random Forest</td><td>0.8058</td><td>0.6820</td><td>0.7692</td><td>0.9318</td></tr>
+</tbody></table></div>
+<h2>Table 4</h2>
+<p class='meta'>Page: 34 (PDF page number) | Orientation: portrait</p>
+<p class='caption'>Caption: Table 7.3: Top Crops by Predicted High-Performance Probability (caption number: 7.3)</p>
+<div class='table-container'><table>
+<thead><tr><th>Crop</th><th>Mean Probability</th></tr></thead><tbody>
+<tr><td>Banana</td><td>0.9635</td></tr>
+<tr><td>Tapioca</td><td>0.9606</td></tr>
+<tr><td>Garlic</td><td>0.9600</td></tr>
+<tr><td>Coconut</td><td>0.6607</td></tr>
+<tr><td>Lemon</td><td>0.6446</td></tr>
+</tbody></table></div>
+<h2>Table 5</h2>
+<p class='meta'>Page: 34 (PDF page number) | Orientation: portrait</p>
+<p class='caption'>Caption: Table 7.4: Top Crops by Yield Potential (caption number: 7.4)</p>
+<div class='table-container'><table>
+<thead><tr><th>Crop</th><th>Yield Score</th></tr></thead><tbody>
+<tr><td>Coconut</td><td>93.70</td></tr>
+<tr><td>Banana</td><td>92.3</td></tr>
+<tr><td>Tapioca</td><td>90.6</td></tr>
+<tr><td>Maize</td><td>76.9</td></tr>
+<tr><td>Guava</td><td>75.2</td></tr>
+</tbody></table></div>
+<h2>Table 6</h2>
+<p class='meta'>Page: 34 (PDF page number) | Orientation: portrait</p>
+<p class='caption'>Caption: Table 7.5: Top Crops by Profit Proxy (caption number: 7.5)</p>
+<div class='table-container'><table>
+<thead><tr><th>Crop</th><th>Profit Score</th></tr></thead><tbody>
+<tr><td>Banana</td><td>86.2</td></tr>
+<tr><td>Tapioca</td><td>82.8</td></tr>
+<tr><td>Garlic</td><td>79.3</td></tr>
+<tr><td>Lemon</td><td>75.9</td></tr>
+<tr><td>Onion</td><td>72.4</td></tr>
+</tbody></table></div>
+</body></html>

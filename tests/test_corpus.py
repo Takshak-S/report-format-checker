@@ -33,16 +33,17 @@ CORPUS_DIR = BASE_DIR / "test_files"
 CORPUS_GLOB = sorted(glob.glob(str(CORPUS_DIR / "*.pdf"))) if CORPUS_DIR.exists() else []
 
 # Per-file upper bound on Page-Layout findings (measured after the table-row
-# exclusion).  Any increase is a regression to investigate.
+# exclusion, and after LIST blocks joined the per-line margin check in
+# margin_validator.py).  Any increase is a regression to investigate.
 MARGIN_BOUNDS = {
     "2026W10140U02H005_22BCE3217.pdf": 0,
-    "2026W10140U02H007_22BCE0927.pdf": 3,
+    "2026W10140U02H007_22BCE0927.pdf": 4,
     "2026W10140U03H004_22BCB0096.pdf": 1,
-    "2026W10140U03H008_22BCE0335.pdf": 3,
+    "2026W10140U03H008_22BCE0335.pdf": 4,
     "2026W10167P01H013_24MAI0005.pdf": 0,
     "2026W10167P01H014_24MAI0027.pdf": 0,
     "2026W10167U01H015_22BCE0508.pdf": 1,
-    "2026W10167U01H016_22BCE0309.pdf": 0,
+    "2026W10167U01H016_22BCE0309.pdf": 2,
     "2026W10167U03H018_22BCE3372.pdf": 2,
     "2026W10230U01H019_22BCE0420.pdf": 0,
     "2026W10243I01H026_21MID0051.pdf": 0,
@@ -89,14 +90,42 @@ class TestCorpus:
             assert len(layout) <= bound, (
                 f"{name}: {len(layout)} layout finding(s), bound {bound}")
 
-    def test_high_dpi_images_present(self, corpus_results):
-        """Embedded images must report real (computed) DPI, not PyMuPDF's 96."""
+    def test_zero_heading_findings_on_corpus(self, corpus_results):
+        """Correctly formatted corpus PDFs must produce zero heading findings."""
         for name, (doc, collector) in corpus_results.items():
-            images = [img for page in doc.pages for img in page.get_images()]
-            if not images:
+            head = [v for v in collector.all if v.category == Category.HEADINGS]
+            assert not head, f"{name}: {len(head)} heading finding(s)"
+
+    def test_no_alignment_spacing_noise_on_corpus(self, corpus_results):
+        """Alignment/spacing findings are limited to genuinely deviant paragraphs.
+
+        After the noise-reduction pass, only H008 retains one genuine
+        left-aligned paragraph; every other corpus PDF must be clean.
+        """
+        bounds = {
+            "2026W10140U02H005_22BCE3217.pdf": 0,
+            "2026W10140U02H007_22BCE0927.pdf": 0,
+            "2026W10140U03H004_22BCB0096.pdf": 0,
+            "2026W10140U03H008_22BCE0335.pdf": 1,  # genuine 'Bidding logic' paragraph
+            "2026W10167P01H013_24MAI0005.pdf": 0,
+            "2026W10167P01H014_24MAI0027.pdf": 0,
+            "2026W10167U01H015_22BCE0508.pdf": 0,
+            "2026W10167U01H016_22BCE0309.pdf": 0,
+            "2026W10167U03H018_22BCE3372.pdf": 0,
+            "2026W10230U01H019_22BCE0420.pdf": 0,
+            "2026W10243I01H026_21MID0051.pdf": 0,
+            "2026W10243P01H023_24MCS0036.pdf": 0,
+        }
+        for name, (doc, collector) in corpus_results.items():
+            bound = bounds.get(name)
+            if bound is None:
                 continue
-            high = [img for img in images if max(img.dpi_x, img.dpi_y) > 300]
-            assert high, f"{name}: no image reports DPI > 300 ({[img.dpi_x for img in images[:3]]})"
+            noise = [v for v in collector.all
+                     if v.category in (Category.ALIGNMENT, Category.SPACING)]
+            assert len(noise) <= bound, (
+                f"{name}: {len(noise)} alignment/spacing finding(s), bound {bound}")
+
+    
 
     def test_summary_keys_present(self, corpus_results):
         for name, (doc, collector) in corpus_results.items():
