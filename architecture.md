@@ -20,7 +20,7 @@ that noise can be suppressed at its source (classification/reconstruction)
 rather than by loosening validator tolerances.
 
 ```
-PDF (rendered) 
+PDF (rendered)
    │
    ▼
 ┌──────────────────────────┐
@@ -69,14 +69,19 @@ PDF (rendered)
 └──────────────────────────┘
    │
    ▼
-reporting:  annotated PDFs (reporter/), Excel dossiers (OpenPyXL),
-            Streamlit dashboard (app.py / ui/), overall score
-            (utils/scoring.py)
+final findings → utils/scoring.py (compute_score / document_summary,
+                  overall score is a summary metric, NOT a finding)
+            → reporter/ (annotated PDFs, HTML/Excel/JSON reports,
+                  table reports, corpus summary.json + README.md)
+            → app.py / ui/ (Streamlit dashboard)
 ```
 
 Orchestration happens in `checker.py:run_checks()`: `load_pdf` →
 `LayoutAnalyzer().classify` → `build_profile` → six validators (each seeded
-with the profile) → `apply_noise_filter` → `score_to_violation`.
+with the profile) → `apply_noise_filter`. The overall format score is computed
+afterwards via `utils/scoring.compute_score` / `document_summary` and is **never
+injected into the `ViolationCollector`** (there is no `score_to_violation`
+wrapper anymore).
 
 ## 1. Ingestion — `ingestion/pdf_loader.py`
 
@@ -152,6 +157,18 @@ probability `< 0.75`) becomes `UNKNOWN`.
   state transitions so "3.4.2 Bibliography" etc. cannot become heading
   violations.
 
+### Bibliography / references / appendix state machine
+
+The classifier tracks `in_bibliography` / `in_appendix` state. Section headers
+are recognized when the line looks like "Bibliography"/"References"/"Appendix"
+and the font is **bold or medium/semibold/demibold**
+(`_MEDIUM_FONT_RE = (medi|medium|demibold|semibold|bold)`); while inside a
+section, subsequent paragraphs score `BIBLIOGRAPHY` / `REFERENCE` /
+`APPENDIX`. The state is **reset when a new chapter appears** (`Chapter N` or a
+full-match Roman numeral like `IV`, `V`, `X` — prefix matches are rejected so
+innocent words like "in"/"intro" are not treated as chapter titles). A TOC
+context ends at the first chapter title after the contents page.
+
 ### Lists, glossaries, equations
 
 - `_BULLET_RE = ^[\u2022\u2023\u00B7\u2013\*\-]\s+\S` (bullet `•`, triangle
@@ -166,9 +183,9 @@ probability `< 0.75`) becomes `UNKNOWN`.
 
 ## 4. Document Profile — `utils/profile.py`
 
-`build_profile(doc)` computes a per-document "fingerprint" used by every
-validator so checks compare against the document's *own* consistent values
-instead of absolute thresholds:
+`build_profile(doc, config=None)` computes a per-document "fingerprint" used by
+every validator so checks compare against the document's *own* consistent
+values instead of absolute thresholds:
 
 - `page_count`, `page_width`, `page_height`;
 - **typography**: `body_font_size`, `body_font_family`, `body_size_tolerance`
@@ -176,12 +193,16 @@ instead of absolute thresholds:
   from high-confidence `BODY_TEXT`;
 - **margins**: `left_margin`, `right_margin`, `top_margin`, `bottom_margin`
   (median of paragraph edges), `margin_tolerance` (default `10.0` pt, grows
-  with the document's own spread);
+  with the document's own spread via `3 * MAD`, capped at `20.0` pt);
 - **structure flags**: `has_images`, `has_tables`, `has_equations`, `has_toc`,
   `has_captions`, `chapter_count`;
 - **heading sizes**: `heading_l0_size … heading_l3_size` (char-weighted
-  dominant sizes per level);
-- **indentation**: `body_left_indent`, `indent_tolerance`.
+  dominant sizes per level, computed from high-confidence headings with
+  `classification_confidence >= 0.5`, excluding `BIBLIOGRAPHY` /
+  `REFERENCE` / `APPENDIX`); when `config` is provided these fall back to the
+  template values first;
+- **indentation**: `body_left_indent` (median body left edge),
+  `indent_tolerance` (default `8.0` pt).
 
 Validators call `set_profile(profile)`; when a profile is absent they fall
 back to `build_profile(doc, config)` internally.
@@ -190,7 +211,8 @@ back to `build_profile(doc, config)` internally.
 
 All validators extend `checks/validators.py::ValidationRule` and return
 `Violation` objects (category, severity, page, expected/detected, confidence,
-reasons, suggested fix, location, bbox).
+reasons, suggested fix, location, bbox). They are orchestrated in
+`checker.py:run_checks()`.
 
 ### FontValidator — `checks/font_validator.py`
 
@@ -206,8 +228,12 @@ reasons, suggested fix, location, bbox).
 - Paragraph-level **median** edge analysis (left/right), checked against
   `expected_left = left_inches * 72` and `right = page_width - right_inches * 72`
   with `profile.margin_tolerance`.
-- `checkable_types`: `BODY_TEXT`, `HEADING_1/2/3`, `CHAPTER_TITLE`,
-  `REFERENCE`, `APPENDIX`.
+- `checkable_types`: `BODY_TEXT`, `LIST`, `HEADING_1/2/3`, `CHAPTER_TITLE`,
+  `REFERENCE`, `APPENDIX`. The **paragraph bbox is never validated directly**.
+- **LIST blocks** reuse the per-line edge analysis: bullet/hanging indentation
+  is exempt from the left rule; a genuinely overfull line — a long unbreakable
+  token (e.g. `kubernetes/deployment.yml`) extending past the right margin plus
+  `margin_tolerance` — is a **MINOR per-line finding**.
 - **Columnar/table rows are excluded**: a line whose consecutive-word gaps
   exceed `_COLUMNAR_GAP_PT = 30.0` pt is treated as a table cell row, not
   prose (genuine overflows show 2–9 pt gaps; table rows 54–109 pt).
@@ -232,9 +258,17 @@ reasons, suggested fix, location, bbox).
 
 ### CaptionValidator — `checks/caption_validator.py`
 
-- Collects `CAPTION` paragraphs; format check requires `Figure N:` /
-  `Table N:`; numbering continuity is checked with INFO severity (gap or
-  repeat).
+- Collects `CAPTION` paragraphs; the format check requires `Figure N:` /
+  `Table N:`.
+- **Numbering continuity** is checked with INFO severity (gap or repeat).
+  Continuity findings carry real evidence: page, bbox, location, previous /
+  current caption context in the detail, expected/detected numbers, and
+  classification signals, with `confidence = 1.0`.
+- **Numbering semantics** follow chapter-prefix advancement (e.g. each caption
+  number's integer part is the chapter prefix "Table 3.2" → 3, so a gap means
+  consecutive captions skipped a chapter). See the design questions in
+  `CURRENT_TASK.md` — alternative per-chapter-sequence semantics are
+  deliberately not implemented.
 - Position validation is currently a no-op stub (spatial figure/bbox
   reconstruction is not available).
 
@@ -243,6 +277,9 @@ reasons, suggested fix, location, bbox).
 - **Deliberate no-op** — returns an empty list. DPI validation was removed on
   purpose (rendered PDFs vary in rasterization DPI and it produced false
   positives). Do not reintroduce it.
+- Graph-axis label OCR support lives in **`checks/image_checks.py`**
+  (`run_image_checks`, pytesseract + pdftoppm) and must remain enabled — do
+  not disable it.
 
 ### SpacingValidator — `checks/spacing_validator.py`
 
@@ -262,20 +299,61 @@ headings, captions, lists, equations, tables, TOC are excluded), at
 `apply_noise_filter(collector, doc)` returns a new, noise-reduced collector:
 
 1. **Confidence gate** — drop findings below `0.40`; demote one severity level
-   below `0.60`.
+   for findings between `0.40` and `0.60`.
 2. **Deduplication** — identical findings (same rule, same page) collapse into
    one with a count.
 3. **Consistency reclassification** — a rule firing on ≥ `0.5` of content
    pages (`_SYSTEMIC_PAGE_FRACTION`, `_MIN_PAGES_FOR_SYSTEMIC = 2`) is a
    systemic issue: collapsed into a single document-level finding.
 
-## 7. Scoring & Reporting
+## 7. Tables
 
-- `utils/scoring.py::compute_score` computes the overall score from collected
-  violations; `score_to_violation` wraps it in an `OVERALL_SCORE` INFO
-  violation. Never hardcode scoring logic in reporters.
-- Reporting produces annotated PDFs (`reporter/`), Excel dossiers
-  (`OpenPyXL`), and a Streamlit dashboard (`app.py`, `ui/`).
+Table extraction is **separate from validation** — there are two distinct
+object types:
+
+- **`TableNode`** — structural tables detected by `pdfplumber`
+  (`services/table_service.py`).
+- **`TABLE` paragraphs** — text blocks the classifier labels as `TABLE`.
+
+`reporter/table_report_generator.py` (`python3 -m reporter.table_report_generator`)
+builds per-PDF HTML table reports, `results/tables/index.html`, and
+`results/tables/_summary.json`. It handles landscape (rotated) tables, merged
+and rotated cells, multiline cells, and word-spacing reconstruction for cell
+text.
+
+**Caption association** (`_find_caption_for_table`): for each `TableNode`, the
+closest paragraph above it on the same page whose text matches
+`TABLE_CAPTION_PATTERN` (`^(Table|Tab\.?)\s+\d+\.\d+\s*[:–\-.]\s*`) becomes its
+caption; otherwise the report shows **"No caption detected"**.
+
+- **Known limitation (current open task):** a caption can visibly exist above
+  a table yet be reported as "No caption detected". This is under
+  investigation — see `CURRENT_TASK.md`. Do not claim it is fixed.
+- Table-report caption association is **independent** of `CaptionValidator`
+  (validation); do not confuse the two.
+
+## 8. Scoring & Reporting
+
+- `utils/scoring.py::compute_score` computes the overall score from the final
+  findings: only `CRITICAL` and `WARNING` severities contribute penalties
+  (per-category weights from config); the `RESEARCH` and `OVERALL_SCORE`
+  categories are skipped. `document_summary` wraps the result (score + grade +
+  per-category counts) for display.
+- The overall format score is a **document summary metric** shown in the
+  Streamlit header (`app.py`, `col0.metric("Overall Format Score", …)`) and
+  report headers. It is **NOT** a Violation and is never added to the
+  `ViolationCollector` (no `score_to_violation`).
+- Reporting (`reporter/`):
+  - annotated PDFs (`pdf_annotator.py`) — each finding gets a highlight /
+    square mark plus a FreeText note and a legend per page, drawn on a copy of
+    the original PDF;
+  - per-PDF HTML reports, Excel dossiers (OpenPyXL), CSV/JSON exports
+    (`report_generator.py`, `export_reporters.py`);
+  - corpus-level `results/summary.json` (final noise-filtered findings) and
+    `results/README.md` (derived tables + notes) regenerated from the actual
+    pipeline — **never hand-edited**.
+- **Original corpus PDFs (`test_files/`) must never be modified**; verify
+  integrity (e.g. SHA-256) when reproducing results.
 
 ## Technology Stack
 
