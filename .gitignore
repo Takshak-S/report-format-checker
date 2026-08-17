@@ -4,3 +4,4 @@ __pycache__/
 test_files/
 AGENTS.md
 CURRENT_TASK.md
+audit_*.json
